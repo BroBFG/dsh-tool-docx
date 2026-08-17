@@ -4,11 +4,11 @@ English | [中文](README.zh.md)
 
 Model-facing Microsoft Word (`.docx`) tools for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): `docx_read` extracts a document as Markdown or structured JSON blocks, `docx_create` generates a new `.docx` from Markdown, and `docx_edit` replaces a document's content from Markdown while preserving its title/author/created properties. `.docx` is a ZIP of XML parts, so every tool reads the whole package through the bounded `ctx.fs.readBytes` primitive and writes packages through the binary-safe `ctx.fs.writeBytes` primitive — the same atomic, sandbox-fenced mutations the text tools use.
 
-This repository is the **standalone, portable copy** of the plugin that ships inside the `deepseek-harness` monorepo (`packages/docx/tool-docx`): same source, buildable and testable on its own against the published `@deepseek-ai/*` packages, so it can be installed into any harness checkout.
+This repository is the **standalone distribution** of the plugin. The plugin is **written for DeepSeek Harness** — a plugin for the harness, not a component extracted from it. It builds and tests on its own against the published `@deepseek-ai/*` packages, so it can be installed into any harness checkout. The source is also developed in a `deepseek-harness` checkout (`packages/docx/tool-docx`) and is not yet merged into the public [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) repository.
 
 ## Requirements
 
-- A DeepSeek Harness host whose filesystem seam provides the **binary** primitives `fs.readBytes` and `fs.writeBytes` (available in the current `deepseek-harness` `main`; the published `@deepseek-ai/dsh-fs@0.0.1-rc.1` is older and ships text-only operations). On an older host every call fails with a typed `DOCX_HOST_FS_UNSUPPORTED` error explaining the requirement — see [Host filesystem contract](#host-filesystem-contract).
+- A DeepSeek Harness host whose filesystem seam provides the **binary** primitives `fs.readBytes` and `fs.writeBytes`. Both exist in the deepseek-harness development tree; `readBytes` is already on the public `master`, while `writeBytes` is the newer addition and is not yet in any published release (the published `@deepseek-ai/dsh-fs@0.0.1-rc.1` ships text-only operations) — so build the harness from the development tree. On a host without the primitives, every call fails with a typed `DOCX_HOST_FS_UNSUPPORTED` error — see [Host filesystem contract](#host-filesystem-contract).
 - The harness provides the peer services: `cordis`, `dsh-tools`, `dsh-fs`, `dsh-llm`, `dsh-sandbox`, `dsh-sandbox-policy`, `dsh-system-prompt`, `dsh-invariants`, `dsh-user-approval`, `dsh-session`.
 
 ## Installation
@@ -59,7 +59,7 @@ All three resolve relative paths against the calling agent's session cwd, dispat
 - **Generation** (`src/docx/generate.ts`) renders the block model with the `docx` library: ATX headings, styled inline runs, 9-level bullet/numbered numbering, pipe tables, and `[text](url)` external hyperlinks. `parseMarkdown` (src/markdown.ts) accepts the subset the extractor emits, so read → edit → write round trips are stable.
 - **Caps are enforced at the seam, not in the tool** — the whole-file byte cap flows into `ctx.fs.readBytes` (`FS_TOO_LARGE` maps to `DOCX_TOO_LARGE`), and the ZIP reader applies the same cap to the uncompressed total, so a compressed bomb cannot expand without limit.
 - **Sandbox parity** — `src/sandbox.ts` mirrors `dsh-tool-fs`'s escalation API (`sandbox_permissions`/`justification` advertised only under a confining backend, denial marker mapping); extracting a shared controller is deferred (see below).
-- **Host filesystem contract** — `src/fs-binary.ts` declares the binary contract (`readBytes`/`writeBytes`) as a local extension of the published `FileSystem` type and guards it at runtime. On the current harness tree the guard is a no-op; on an older host it raises `DOCX_HOST_FS_UNSUPPORTED` with a pointer to this requirement instead of a cryptic `fs.readBytes is not a function`.
+- **Host filesystem contract** — `src/fs-binary.ts` declares the binary contract (`readBytes`/`writeBytes`) as a local extension of the published `FileSystem` type and guards it at runtime. On the development tree the guard is a no-op; on a host without the binary primitives it raises `DOCX_HOST_FS_UNSUPPORTED` with a pointer to this requirement instead of a cryptic `fs.readBytes is not a function`.
 
 ## Model Experience
 
@@ -87,7 +87,7 @@ Prefix-stable while the guidance text is unchanged. Plugin lifecycle or a text c
 
 #### What the model sees
 
-The generated [`docx_read`, `docx_create`, and `docx_edit` schemas](https://github.com/deepseek-ai/deepseek-harness/blob/main/docs/tool-catalog.md#deepseek-aidsh-tool-docx). The byte/character caps are deployment settings, not model arguments; the escalation fields appear only under a confining filesystem backend.
+The generated `docx_read`, `docx_create`, and `docx_edit` schemas — parameters and canonical outputs as summarized in the [Tools](#tools) table. The byte/character caps are deployment settings, not model arguments; the escalation fields appear only under a confining filesystem backend.
 
 #### Token effect
 
@@ -167,12 +167,12 @@ Layout:
 
 ## Relationship to deepseek-harness
 
-The plugin is developed upstream in [`deepseek-ai/deepseek-harness`](https://github.com/deepseek-ai/deepseek-harness) at `packages/docx/tool-docx` and this repository mirrors it for standalone distribution. Two small differences exist only here:
+This plugin is **written for DeepSeek Harness** — it plugs into the harness's `tools`, `fs`, and `systemPrompt` services — not extracted from it. Its source is developed in a `deepseek-harness` checkout at `packages/docx/tool-docx` and mirrored here as the standalone distribution; the public [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) repository does not contain it yet (`packages/docx` is not merged upstream). Two small differences exist only here:
 
-1. `src/fs-binary.ts` (host contract guard) — the upstream `FileSystem` already declares `readBytes`/`writeBytes`;
-2. `tests/tool-runtime-shim.ts` — upstream tests use the real `ToolRuntime` service.
+1. `src/fs-binary.ts` (host contract guard) — the development tree's `FileSystem` already declares `readBytes`/`writeBytes`, so the guard is a no-op there;
+2. `tests/tool-runtime-shim.ts` — the harness tests use the real `ToolRuntime` service.
 
-To pull in upstream changes, copy `packages/docx/tool-docx/{src,tests,README*}` from a fresh harness checkout (keeping `src/fs-binary.ts` and the shim).
+To pull in changes from the development tree, copy `packages/docx/tool-docx/{src,tests,README*}` from a fresh harness checkout (keeping `src/fs-binary.ts` and the shim).
 
 ## License
 
