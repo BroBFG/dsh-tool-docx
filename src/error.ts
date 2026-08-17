@@ -40,11 +40,7 @@ export class DocxError extends HarnessError {
  */
 export function mapFsError(error: unknown): unknown {
   if (!(error instanceof FsError)) return error
-  // The published `FsErrorCode` union predates `FS_TOO_LARGE`; compare on the
-  // raw string so both old and new hosts map correctly (a newer host reports
-  // `FS_TOO_LARGE` when the whole-file byte cap trips).
-  const code = error.code as string
-  switch (code) {
+  switch (error.code) {
     case 'FS_NOT_FOUND':
       return new DocxError(error.message, 'DOCX_NOT_FOUND', { cause: error })
     case 'FS_NOT_REGULAR_FILE':

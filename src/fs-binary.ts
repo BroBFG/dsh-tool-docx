@@ -2,12 +2,12 @@
  * The binary filesystem contract the docx tools require.
  *
  * The plugin reads whole `.docx` packages through `readBytes` and writes them
- * through `writeBytes`. Both primitives are part of the current
- * deepseek-harness filesystem seam but are not yet present in the published
- * `@deepseek-ai/dsh-fs` release (the npm `FileSystem` type ships text-only
- * operations). This module declares the extended contract locally and guards it
- * at runtime, so an older host fails with a clear typed error instead of a
- * cryptic `fs.readBytes is not a function`.
+ * through `writeBytes`. `readBytes` is published in `@deepseek-ai/dsh-fs` since
+ * `0.1.0-rc.7`; `writeBytes` is part of the current deepseek-harness filesystem
+ * seam but is not yet in any published `dsh-fs` release. This module declares
+ * the extended contract locally and guards it at runtime, so a host without
+ * the primitives fails with a clear typed error instead of a cryptic
+ * `fs.readBytes is not a function`.
  * @module @deepseek-ai/dsh-tool-docx/fs-binary
  */
 
@@ -25,7 +25,7 @@ export interface FsBytesWriteOutcome {
 /** A host filesystem that additionally provides the binary read/write primitives. */
 export abstract class BinaryFileSystem extends FileSystem {
   /** Read the whole file as bytes, bounded by `maxBytes`. */
-  abstract readBytes(target: FsTarget, signal: AbortSignal | undefined, maxBytes: number): Promise<Uint8Array>
+  abstract override readBytes(target: FsTarget, signal: AbortSignal | undefined, maxBytes: number): Promise<Uint8Array>
   /** Write raw bytes with an optional version/intent guard. */
   abstract writeBytes(
     target: FsTarget,

@@ -8,8 +8,8 @@
 
 ## 需求
 
-- 一个文件系统 seam 提供**二进制**原语 `fs.readBytes` 和 `fs.writeBytes` 的 DeepSeek Harness 宿主。`readBytes` 已存在于 deepseek-harness 的公开 `master` 上；`writeBytes` 与本插件一同引入，存在于我们开发的本地树中，但尚未出现在任何已发布版本中（已发布的 `@deepseek-ai/dsh-fs@0.0.1-rc.1` 只提供文本操作）。在没有这些原语的宿主机上，每次调用都会以带类型的 `DOCX_HOST_FS_UNSUPPORTED` 错误失败——见[设计说明](#设计说明)中的“宿主文件系统契约”。
-- harness 提供 peer 服务：`cordis`、`dsh-tools`、`dsh-fs`、`dsh-llm`、`dsh-sandbox`、`dsh-sandbox-policy`、`dsh-system-prompt`、`dsh-invariants`、`dsh-user-approval`、`dsh-session`。
+- 一个文件系统 seam 提供**二进制**原语 `fs.readBytes` 和 `fs.writeBytes` 的 DeepSeek Harness 宿主。`readBytes` 自 `@deepseek-ai/dsh-fs@0.1.0-rc.7` 起已发布；`writeBytes` 与本插件一同引入，存在于我们开发的本地树中，但尚未出现在任何已发布的 `dsh-fs` 版本中。在没有这些原语的宿主机上，每次调用都会以带类型的 `DOCX_HOST_FS_UNSUPPORTED` 错误失败——见[设计说明](#设计说明)中的“宿主文件系统契约”。
+- harness 提供 peer 服务（`0.1.0-rc.7` 线）：`cordis`、`dsh-tools`、`dsh-fs`、`dsh-llm`、`dsh-sandbox`、`dsh-sandbox-policy`、`dsh-system-prompt`、`dsh-invariants`、`dsh-user-approval`、`dsh-session`。
 
 ## 安装
 
@@ -34,6 +34,12 @@ plugins:
 ```
 
 > npm 发布已计划但尚未提供；包保留 `@deepseek-ai` scope，以便在 scope 所有者启用后发布到与其 peers 相同的 registry。
+
+该包还附带一个[捆绑补丁](cordis.patch.yml)（package.json 中的 `dsh.bundle.patch`），一行即可挂载插件——加载器会对已安装的插件自动应用，也可手动作为 overlay 传入：
+
+```sh
+pnpm dsh web --patch ./node_modules/@deepseek-ai/dsh-tool-docx/cordis.patch.yml
+```
 
 ## 工具
 
@@ -163,16 +169,16 @@ pnpm pack        # 生成 npm tarball（files：lib/index.js、lib/invariant.js�
 - `src/docx/`——ZIP/XML 提取与 `docx` 库生成；
 - `src/tools/`——三个工具注册；
 - `src/fs-binary.ts`——二进制文件系统契约守卫；
-- `tests/`——转换往返测试与消费者测试（使用一个小的 `ToolRuntime` 垫片，因为已发布的 `dsh-tools` 版本尚未导出该服务类）。
+- `tests/`——转换往返测试与针对已发布 `ToolRuntime` 服务的消费者测试（自 `dsh-tools@0.1.0-rc.7` 起导出）。
 
 ## 与 deepseek-harness 的关系
 
 该插件是**为 DeepSeek Harness 编写的原创独立项目**——它接入 harness 的公开服务（`tools`、`fs`、`systemPrompt`），并在本地 `deepseek-harness` 检出中开发以对 harness 进行测试。它不是共享 `deepseek-harness` 仓库中某个插件的副本，也不属于该仓库；本仓库是规范的发行渠道。两点实现说明：
 
 1. `src/fs-binary.ts`（宿主契约守卫）——二进制 `readBytes`/`writeBytes` 契约是插件设计的一部分。本地树的 `FileSystem` 已提供这两个原语（守卫在那里是无操作）；已发布的 `@deepseek-ai/dsh-fs` 版本没有，因此需要守卫；
-2. `tests/tool-runtime-shim.ts`——harness 的 `ToolRuntime` 服务的最小测试替身，因为已发布的 `dsh-tools` 版本尚未导出该服务类。
+2. `tests/` 针对已发布的 `ToolRuntime` 服务运行（自 `dsh-tools@0.1.0-rc.7` 起导出），因此消费者测试走真实的注册表流水线而非本地替身。
 
-同一份源码位于开发所用的本地 `deepseek-harness` 检出（`packages/docx/tool-docx`）中；从那里复制 `src` 与 `tests` 以保持本仓库同步（保留 `src/fs-binary.ts` 与垫片）。
+同一份源码位于开发所用的本地 `deepseek-harness` 检出（`packages/docx/tool-docx`）中；从那里复制 `src` 与 `tests` 以保持本仓库同步（保留 `src/fs-binary.ts`，本地树不需要它）。
 
 ## 许可证
 

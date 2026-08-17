@@ -8,8 +8,8 @@ This repository is the **standalone distribution** of the plugin. The plugin is 
 
 ## Requirements
 
-- A DeepSeek Harness host whose filesystem seam provides the **binary** primitives `fs.readBytes` and `fs.writeBytes`. `readBytes` already exists on the public `master` of deepseek-harness; `writeBytes` was introduced together with this plugin and is present in the local tree we develop against, but is not yet in any published release (the published `@deepseek-ai/dsh-fs@0.0.1-rc.1` ships text-only operations). On a host without the primitives, every call fails with a typed `DOCX_HOST_FS_UNSUPPORTED` error — see [Design notes](#design-notes), "Host filesystem contract".
-- The harness provides the peer services: `cordis`, `dsh-tools`, `dsh-fs`, `dsh-llm`, `dsh-sandbox`, `dsh-sandbox-policy`, `dsh-system-prompt`, `dsh-invariants`, `dsh-user-approval`, `dsh-session`.
+- A DeepSeek Harness host whose filesystem seam provides the **binary** primitives `fs.readBytes` and `fs.writeBytes`. `readBytes` is published in `@deepseek-ai/dsh-fs` since `0.1.0-rc.7`; `writeBytes` was introduced together with this plugin and is present in the local tree we develop against, but is not yet in any published `dsh-fs` release. On a host without the primitives, every call fails with a typed `DOCX_HOST_FS_UNSUPPORTED` error — see [Design notes](#design-notes), "Host filesystem contract".
+- The harness provides the peer services (the `0.1.0-rc.7` line): `cordis`, `dsh-tools`, `dsh-fs`, `dsh-llm`, `dsh-sandbox`, `dsh-sandbox-policy`, `dsh-system-prompt`, `dsh-invariants`, `dsh-user-approval`, `dsh-session`.
 
 ## Installation
 
@@ -34,6 +34,12 @@ plugins:
 ```
 
 > npm publication is planned but not yet available; the package keeps the `@deepseek-ai` scope so it can be published to the same registry as its peers once the scope owner enables it.
+
+The package also ships a [bundle patch](cordis.patch.yml) (referenced by `dsh.bundle.patch` in package.json) that mounts the plugin in one row — the loader applies it automatically for installed plugins, or pass it manually as an overlay:
+
+```sh
+pnpm dsh web --patch ./node_modules/@deepseek-ai/dsh-tool-docx/cordis.patch.yml
+```
 
 ## Tools
 
@@ -163,16 +169,16 @@ Layout:
 - `src/docx/` — ZIP/XML extraction and `docx`-library generation;
 - `src/tools/` — the three tool registrations;
 - `src/fs-binary.ts` — the binary filesystem contract guard;
-- `tests/` — conversion round-trip tests and consumer tests (with a small `ToolRuntime` shim, since the published `dsh-tools` release does not export the service class yet).
+- `tests/` — conversion round-trip tests and consumer tests against the published `ToolRuntime` service (exported since `dsh-tools@0.1.0-rc.7`).
 
 ## Relationship to deepseek-harness
 
 This plugin is an **original, independent project written for DeepSeek Harness** — it plugs into the harness's public services (`tools`, `fs`, `systemPrompt`) and is developed in a local `deepseek-harness` checkout for testing against the harness. It is not a copy of a plugin from the shared `deepseek-harness` repository and is not part of it; this repository is the canonical distribution. Two implementation notes:
 
 1. `src/fs-binary.ts` (host contract guard) — the binary `readBytes`/`writeBytes` contract is part of this plugin's design. The local tree's `FileSystem` already provides both primitives (the guard is a no-op there); the published `@deepseek-ai/dsh-fs` release does not, hence the guard;
-2. `tests/tool-runtime-shim.ts` — a minimal test double for the harness's `ToolRuntime` service, because the published `dsh-tools` release does not export the service class.
+2. `tests/` runs against the published `ToolRuntime` service (exported since `dsh-tools@0.1.0-rc.7`), so the consumer tests exercise the real registry pipeline rather than a local double.
 
-The same source lives in the local `deepseek-harness` checkout used for development (`packages/docx/tool-docx`); keep this repository in sync by copying `src` and `tests` from there (keeping `src/fs-binary.ts` and the shim).
+The same source lives in the local `deepseek-harness` checkout used for development (`packages/docx/tool-docx`); keep this repository in sync by copying `src` and `tests` from there (keeping `src/fs-binary.ts`, which the local tree does not need).
 
 ## License
 

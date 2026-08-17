@@ -8,7 +8,8 @@ import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { CallId } from '@deepseek-ai/dsh-llm'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from './tool-runtime-shim.ts'
+import ToolRuntime from '@deepseek-ai/dsh-tools'
+import { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
 import { FsError, FsTargetKey, FsVersion } from '@deepseek-ai/dsh-fs'
 import type { FsDirEntry, FsInfo, FsPathInfo, FsTarget, FsWriteIntent } from '@deepseek-ai/dsh-fs'
 import { BinaryFileSystem } from '../src/fs-binary.ts'
@@ -88,6 +89,18 @@ function errorCode(result: { isError: boolean; error?: { info?: { code?: string 
 type ToolResult<T> = { isError: boolean; value: T; error?: { info?: { code?: string } } }
 
 describe('docx tools over a fake filesystem', () => {
+  it('registers docx_read, docx_create, and docx_edit', async () => {
+    const { ctx } = await setup()
+    expect(ctx.tools.schemas().map(s => s.name).sort()).toEqual(['docx_create', 'docx_edit', 'docx_read'])
+  })
+
+  it('registers the docx guidance prompt section', async () => {
+    const { ctx } = await setup()
+    const prompt = renderPrompt(await ctx.systemPrompt.assemble())
+    expect(prompt).toContain('MS Word .docx files are binary')
+    expect(prompt).toContain('Use docx_read')
+  })
+
   it('docx_create writes a valid document and docx_read extracts it', async () => {
     const { ctx } = await setup()
     const created = await call(ctx, 'docx_create', {
