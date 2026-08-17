@@ -1,0 +1,11 @@
+# pnpm 11 project settings (pnpm-workspace.yaml doubles as the settings file;
+# the keys here were set with `pnpm config set --location project`).
+#
+# pnpm auto-installs missing peer dependencies by default. Some published
+# @deepseek-ai peer packages reference unpublished helper packages (for
+# example @deepseek-ai/dsh-session peers @deepseek-ai/dsh-type-meta, which is
+# not on the registry), so auto-installing peers would fail resolution. In a
+# real DeepSeek Harness the host provides every peer; dev installs here only
+# need what this package's own code and tests use.
+autoInstallPeers: false
+strictPeerDependencies: false
