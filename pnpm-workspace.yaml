@@ -9,3 +9,10 @@
 # need what this package's own code and tests use.
 autoInstallPeers: false
 strictPeerDependencies: false
+
+# pnpm 11's supply-chain policy rejects lockfile entries younger than 24h
+# (minimumReleaseAge default). The @deepseek-ai peer line moves quickly (rc.7
+# ships on the same day), so exempt the official scope instead of disabling
+# the cooldown for everything else.
+minimumReleaseAgeExclude:
+  - '@deepseek-ai/*'
