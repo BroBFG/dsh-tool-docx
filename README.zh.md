@@ -1,6 +1,6 @@
 # @deepseek-ai/dsh-tool-docx
 
-[English](README.md) | 中文
+[English](README.md) | 中文 | [Русский](README.ru.md)
 
 面向模型的微软 Word（`.docx`）工具，用于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)：`docx_read` 将文档提取为 Markdown 或结构化 JSON 块，`docx_create` 从 Markdown 生成新的 `.docx`，`docx_edit` 从 Markdown 替换文档内容并保留其 title/author/created 属性。`.docx` 是 ZIP 封装的 XML 部件，因此每个工具都通过有界的 `ctx.fs.readBytes` 原语读取整个包，并通过二进制安全的 `ctx.fs.writeBytes` 原语写入包——与文本工具使用相同的原子、沙箱围栏变更。
 
@@ -8,7 +8,7 @@
 
 ## 需求
 
-- 一个文件系统 seam 提供**二进制**原语 `fs.readBytes` 和 `fs.writeBytes` 的 DeepSeek Harness 宿主。`readBytes` 已存在于 deepseek-harness 的公开 `master` 上；`writeBytes` 与本插件一同引入，存在于我们开发的本地树中，但尚未出现在任何已发布版本中（已发布的 `@deepseek-ai/dsh-fs@0.0.1-rc.1` 只提供文本操作）。在没有这些原语的宿主机上，每次调用都会以带类型的 `DOCX_HOST_FS_UNSUPPORTED` 错误失败——见[宿主文件系统契约](#宿主文件系统契约)。
+- 一个文件系统 seam 提供**二进制**原语 `fs.readBytes` 和 `fs.writeBytes` 的 DeepSeek Harness 宿主。`readBytes` 已存在于 deepseek-harness 的公开 `master` 上；`writeBytes` 与本插件一同引入，存在于我们开发的本地树中，但尚未出现在任何已发布版本中（已发布的 `@deepseek-ai/dsh-fs@0.0.1-rc.1` 只提供文本操作）。在没有这些原语的宿主机上，每次调用都会以带类型的 `DOCX_HOST_FS_UNSUPPORTED` 错误失败——见[设计说明](#设计说明)中的“宿主文件系统契约”。
 - harness 提供 peer 服务：`cordis`、`dsh-tools`、`dsh-fs`、`dsh-llm`、`dsh-sandbox`、`dsh-sandbox-policy`、`dsh-system-prompt`、`dsh-invariants`、`dsh-user-approval`、`dsh-session`。
 
 ## 安装

@@ -1,6 +1,6 @@
 # @deepseek-ai/dsh-tool-docx
 
-English | [中文](README.zh.md)
+English | [中文](README.zh.md) | [Русский](README.ru.md)
 
 Model-facing Microsoft Word (`.docx`) tools for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): `docx_read` extracts a document as Markdown or structured JSON blocks, `docx_create` generates a new `.docx` from Markdown, and `docx_edit` replaces a document's content from Markdown while preserving its title/author/created properties. `.docx` is a ZIP of XML parts, so every tool reads the whole package through the bounded `ctx.fs.readBytes` primitive and writes packages through the binary-safe `ctx.fs.writeBytes` primitive — the same atomic, sandbox-fenced mutations the text tools use.
 
@@ -8,7 +8,7 @@ This repository is the **standalone distribution** of the plugin. The plugin is 
 
 ## Requirements
 
-- A DeepSeek Harness host whose filesystem seam provides the **binary** primitives `fs.readBytes` and `fs.writeBytes`. `readBytes` already exists on the public `master` of deepseek-harness; `writeBytes` was introduced together with this plugin and is present in the local tree we develop against, but is not yet in any published release (the published `@deepseek-ai/dsh-fs@0.0.1-rc.1` ships text-only operations). On a host without the primitives, every call fails with a typed `DOCX_HOST_FS_UNSUPPORTED` error — see [Host filesystem contract](#host-filesystem-contract).
+- A DeepSeek Harness host whose filesystem seam provides the **binary** primitives `fs.readBytes` and `fs.writeBytes`. `readBytes` already exists on the public `master` of deepseek-harness; `writeBytes` was introduced together with this plugin and is present in the local tree we develop against, but is not yet in any published release (the published `@deepseek-ai/dsh-fs@0.0.1-rc.1` ships text-only operations). On a host without the primitives, every call fails with a typed `DOCX_HOST_FS_UNSUPPORTED` error — see [Design notes](#design-notes), "Host filesystem contract".
 - The harness provides the peer services: `cordis`, `dsh-tools`, `dsh-fs`, `dsh-llm`, `dsh-sandbox`, `dsh-sandbox-policy`, `dsh-system-prompt`, `dsh-invariants`, `dsh-user-approval`, `dsh-session`.
 
 ## Installation
