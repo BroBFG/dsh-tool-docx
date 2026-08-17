@@ -1,13 +1,13 @@
 /**
  * The sandbox-escalation API for the mutating docx tools: per-call policy
- * resolution, advertised escalation fields, and denial-marker mapping — the
+ * resolution, advertised escalation fields, and denial-marker mapping вЂ” the
  * same pieces `dsh-tool-fs` uses, so docx mutations escalate identically to
  * bash and fs. Built ONCE per plugin from `ctx.fs.sandboxMode`.
  *
  * This mirrors `packages/fs/tool-fs/src/sandbox.ts`; extracting a shared
  * controller is deferred work (see the package README).
  *
- * @module @deepseek-ai/dsh-tool-docx/sandbox
+ * @module dsh-tool-docx/sandbox
  */
 
 import type { Context } from '@deepseek-ai/cordis'
@@ -98,7 +98,7 @@ export class DocxSandboxController {
 
   /**
    * Map a thrown provider error for the model: a `FS_SANDBOX_DENIED` becomes a
-   * `DocxError` carrying the shared `[sandbox: …]` marker plus the same-turn
+   * `DocxError` carrying the shared `[sandbox: вЂ¦]` marker plus the same-turn
    * escalation hint (keeping the structured `DOCX_SANDBOX_DENIED` code).
    * @param error - the error thrown by the mutation.
    * @param policy - the policy stamped onto the call.

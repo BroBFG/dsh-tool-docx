@@ -3,7 +3,7 @@
  * library: headings, paragraphs with inline styling, nested bullet/numbered
  * lists, pipe tables, and external hyperlinks. Document properties come from
  * the caller (extracted from the previous version on an edit).
- * @module @deepseek-ai/dsh-tool-docx/docx/generate
+ * @module dsh-tool-docx/docx/generate
  */
 
 import {
@@ -164,7 +164,7 @@ function escapeXml(value: string): string {
  * The `docx` library stamps default core properties (current time as
  * `dcterms:created`, `Un-named` as `dc:creator`); patch the packed package's
  * `docProps/core.xml` so an edit round trip keeps the document's exact
- * title/author/created — and removes the elements when the value is null.
+ * title/author/created вЂ” and removes the elements when the value is null.
  * @param packed - the freshly packed `.docx` bytes.
  * @param props - the document properties to stamp.
  * @returns the repacked bytes with the patched core-properties document.

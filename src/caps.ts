@@ -1,7 +1,7 @@
 /**
- * Resolved docx tool caps — plugin config after defaulting (see `Config` in
+ * Resolved docx tool caps вЂ” plugin config after defaulting (see `Config` in
  * index.ts), shared by all three tools.
- * @module @deepseek-ai/dsh-tool-docx/caps
+ * @module dsh-tool-docx/caps
  */
 
 export interface DocxToolCaps {

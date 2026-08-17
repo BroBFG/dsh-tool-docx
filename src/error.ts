@@ -2,7 +2,7 @@
  * Typed error vocabulary for the docx tools: a stable machine-routable code
  * distinct from the human-readable message, plus the mapping from the
  * filesystem seam's `FsError` codes.
- * @module @deepseek-ai/dsh-tool-docx/error
+ * @module dsh-tool-docx/error
  */
 
 import { HarnessError } from '@deepseek-ai/dsh-llm'

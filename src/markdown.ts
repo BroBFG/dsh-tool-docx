@@ -1,11 +1,11 @@
 /**
- * Markdown → block parsing for the docx generator: headings, paragraphs,
+ * Markdown в†’ block parsing for the docx generator: headings, paragraphs,
  * nested lists, pipe tables, and inline formatting (`**bold**`, `*italic*`,
  * `` `code` ``, `~~strike~~`, `[text](url)`). The supported subset is
  * deliberately small and matches what {@link extractDocx} emits, so a
- * read → edit → write round trip is stable. Unsupported constructs degrade to
+ * read в†’ edit в†’ write round trip is stable. Unsupported constructs degrade to
  * paragraphs with a warning instead of failing.
- * @module @deepseek-ai/dsh-tool-docx/markdown
+ * @module dsh-tool-docx/markdown
  */
 
 import type { DocxBlock } from './types.ts'

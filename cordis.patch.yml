@@ -3,4 +3,4 @@
 # after this layer; rows here can be overridden by id in later layers.
 - insert:
     - id: tool-docx
-      name: '@deepseek-ai/dsh-tool-docx'
+      name: 'dsh-tool-docx'

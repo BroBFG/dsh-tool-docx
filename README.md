@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-tool-docx
+# dsh-tool-docx
 
 English | [中文](README.zh.md) | [Русский](README.ru.md)
 
@@ -30,15 +30,15 @@ Then mount it in the harness plugin configuration:
 ```yaml
 plugins:
   - id: tool-docx
-    name: '@deepseek-ai/dsh-tool-docx'
+    name: 'dsh-tool-docx'
 ```
 
-> npm publication is planned but not yet available; the package keeps the `@deepseek-ai` scope so it can be published to the same registry as its peers once the scope owner enables it.
+> npm publication is planned but not yet available; the package ships under the standalone name `dsh-tool-docx` (the `dsh-tool-*` ecosystem convention), independent of the `@deepseek-ai` scope.
 
 The package also ships a [bundle patch](cordis.patch.yml) (referenced by `dsh.bundle.patch` in package.json) that mounts the plugin in one row — the loader applies it automatically for installed plugins, or pass it manually as an overlay:
 
 ```sh
-pnpm dsh web --patch ./node_modules/@deepseek-ai/dsh-tool-docx/cordis.patch.yml
+pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml
 ```
 
 ## Tools

@@ -3,7 +3,7 @@
  * Guarded with `createIfAbsent` by default so an existing file is never
  * blindly overwritten (the observation-policy waterfall may supply its own
  * intent).
- * @module @deepseek-ai/dsh-tool-docx/tools/create
+ * @module dsh-tool-docx/tools/create
  */
 
 import type { Context } from '@deepseek-ai/cordis'

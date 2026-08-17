@@ -2,7 +2,7 @@
  * Model-facing `docx_read`: extract a `.docx` file as Markdown or structured
  * JSON blocks. Bounded by the configured byte cap (whole file), the ZIP
  * expansion cap, and the returned-markdown character cap.
- * @module @deepseek-ai/dsh-tool-docx/tools/read
+ * @module dsh-tool-docx/tools/read
  */
 
 import type { Context } from '@deepseek-ai/cordis'
@@ -35,7 +35,7 @@ function parseReadArgs(args: ReadArgs): { filePath: string; format: 'markdown' |
 /** Render the read value as model-facing text: markdown, or pretty JSON blocks. */
 function renderReadValue(value: DocxReadValue, maxChars: number): string {
   const body = value.format === 'json' ? JSON.stringify(value.blocks, null, 2) : value.markdown ?? ''
-  return body.length > maxChars ? `${body.slice(0, maxChars)}\n… (truncated)` : body
+  return body.length > maxChars ? `${body.slice(0, maxChars)}\nвЂ¦ (truncated)` : body
 }
 
 /**
@@ -47,7 +47,7 @@ export function applyReadTool(ctx: Context, caps: DocxToolCaps): void {
   ctx.systemPrompt.section({
     name: 'tool:docx-read',
     order: 110,
-    text: 'MS Word .docx files are binary (ZIP+XML) and the read tool cannot read them. Use docx_read to extract a document as Markdown (default) or structured JSON blocks, docx_create to generate a new .docx from Markdown, and docx_edit to replace a document\'s content from Markdown while preserving its title/author/created properties. Legacy .doc is not supported — convert it to .docx first.',
+    text: 'MS Word .docx files are binary (ZIP+XML) and the read tool cannot read them. Use docx_read to extract a document as Markdown (default) or structured JSON blocks, docx_create to generate a new .docx from Markdown, and docx_edit to replace a document\'s content from Markdown while preserving its title/author/created properties. Legacy .doc is not supported вЂ” convert it to .docx first.',
   })
 
   ctx.tools.register(defineTool({

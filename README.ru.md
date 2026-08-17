@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-tool-docx
+# dsh-tool-docx
 
 [English](README.md) | [中文](README.zh.md) | Русский
 
@@ -30,15 +30,15 @@ pnpm add ../dsh-tool-docx
 ```yaml
 plugins:
   - id: tool-docx
-    name: '@deepseek-ai/dsh-tool-docx'
+    name: 'dsh-tool-docx'
 ```
 
-> Публикация в npm запланирована, но пока недоступна; пакет сохраняет scope `@deepseek-ai`, чтобы его можно было опубликовать в тот же реестр, что и его peers, как только владелец scope это разрешит.
+> Публикация в npm запланирована, но пока недоступна; пакет поставляется под самостоятельным именем `dsh-tool-docx` (конвенция экосистемы `dsh-tool-*`), независимо от scope `@deepseek-ai`.
 
 Пакет также поставляется с [bundle-патчем](cordis.patch.yml) (на него ссылается `dsh.bundle.patch` в package.json), который монтирует плагин одной строкой — загрузчик применяет его автоматически для установленных плагинов, либо его можно передать вручную как overlay:
 
 ```sh
-pnpm dsh web --patch ./node_modules/@deepseek-ai/dsh-tool-docx/cordis.patch.yml
+pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml
 ```
 
 ## Инструменты

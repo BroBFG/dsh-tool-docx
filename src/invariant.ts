@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-tool-docx`.
- * @module @deepseek-ai/dsh-tool-docx/invariant
+ * Package-owned invariant companion for `dsh-tool-docx`.
+ * @module dsh-tool-docx/invariant
  */
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-tool-docx'
+const PACKAGE_NAME = 'dsh-tool-docx'
 
 /** Cordis companion plugin name. */
 export const name = 'tool-docx-invariant'

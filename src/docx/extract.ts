@@ -2,9 +2,9 @@
  * Extract a `.docx` package into Markdown and structured blocks: walks
  * `word/document.xml` (paragraphs, runs, lists, tables, hyperlinks, images),
  * resolves list numbering through `word/numbering.xml`, and reads document
- * properties from `docProps/core.xml`. Pure — no I/O; callers supply the
+ * properties from `docProps/core.xml`. Pure вЂ” no I/O; callers supply the
  * bounded package bytes.
- * @module @deepseek-ai/dsh-tool-docx/docx/extract
+ * @module dsh-tool-docx/docx/extract
  */
 
 import { XMLParser } from 'fast-xml-parser'
@@ -179,7 +179,7 @@ function parseParagraph(
   }
 }
 
-/** Resolve `numId` → ordered/unordered from `word/numbering.xml`. */
+/** Resolve `numId` в†’ ordered/unordered from `word/numbering.xml`. */
 function buildNumberingMap(entries: ZipEntries): Map<string, { ordered: boolean }> {
   const result = new Map<string, { ordered: boolean }>()
   const raw = entries.get(NUMBERING_XML)
@@ -216,7 +216,7 @@ function buildNumberingMap(entries: ZipEntries): Map<string, { ordered: boolean 
   return result
 }
 
-/** `word/_rels/document.xml.rels` → relationship id → external target. */
+/** `word/_rels/document.xml.rels` в†’ relationship id в†’ external target. */
 function buildHyperlinkMap(entries: ZipEntries): Map<string, string> {
   const result = new Map<string, string>()
   const raw = entries.get(DOCUMENT_RELS_XML)

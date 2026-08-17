@@ -1,5 +1,5 @@
 {
-  // Standalone build for @deepseek-ai/dsh-tool-docx. Mirrors the compiler
+  // Standalone build for dsh-tool-docx. Mirrors the compiler
   // options of the deepseek-harness tsconfig.base.json, minus workspace-only
   // settings (paths, composite, project references): the peers resolve from
   // node_modules here.

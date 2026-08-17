@@ -2,7 +2,7 @@
  * Shared vocabulary for the docx tool suite: the structured block model a
  * document is extracted into and regenerated from, the preserved document
  * properties, and the full extraction result.
- * @module @deepseek-ai/dsh-tool-docx/types
+ * @module dsh-tool-docx/types
  */
 
 /** One structured content block. `image` blocks appear in read output only; the generator emits a warning instead of embedding bytes. */

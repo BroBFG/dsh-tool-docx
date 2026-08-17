@@ -1,7 +1,7 @@
 /**
  * Shared helpers for the docx tools: path/extension validation, session-cwd
  * resolution, observed-state emission, and common argument validation.
- * @module @deepseek-ai/dsh-tool-docx/tool-utils
+ * @module dsh-tool-docx/tool-utils
  */
 
 import type { Context } from '@deepseek-ai/cordis'
@@ -17,7 +17,7 @@ const PARENT_PATH_SEGMENT = /(?:^|[\\/])\.\.(?:[\\/]|$)/
  */
 export function assertSupportedExtension(path: string): void {
   if (/\.doc$/i.test(path.trim())) {
-    throw new DocxError('legacy .doc format is not supported — convert the document to .docx first', 'DOCX_LEGACY_DOC')
+    throw new DocxError('legacy .doc format is not supported вЂ” convert the document to .docx first', 'DOCX_LEGACY_DOC')
   }
 }
 

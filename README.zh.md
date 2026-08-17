@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-tool-docx
+# dsh-tool-docx
 
 [English](README.md) | 中文 | [Русский](README.ru.md)
 
@@ -30,15 +30,15 @@ pnpm add ../dsh-tool-docx
 ```yaml
 plugins:
   - id: tool-docx
-    name: '@deepseek-ai/dsh-tool-docx'
+    name: 'dsh-tool-docx'
 ```
 
-> npm 发布已计划但尚未提供；包保留 `@deepseek-ai` scope，以便在 scope 所有者启用后发布到与其 peers 相同的 registry。
+> npm 发布已计划但尚未提供；包以独立名称 `dsh-tool-docx` 发布（`dsh-tool-*` 生态惯例），不依赖 `@deepseek-ai` scope。
 
 该包还附带一个[捆绑补丁](cordis.patch.yml)（package.json 中的 `dsh.bundle.patch`），一行即可挂载插件——加载器会对已安装的插件自动应用，也可手动作为 overlay 传入：
 
 ```sh
-pnpm dsh web --patch ./node_modules/@deepseek-ai/dsh-tool-docx/cordis.patch.yml
+pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml
 ```
 
 ## 工具

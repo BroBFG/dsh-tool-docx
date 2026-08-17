@@ -1,12 +1,12 @@
 /**
- * Model-facing Microsoft Word (.docx) tools: `docx_read` (docx → Markdown or
- * structured JSON blocks), `docx_create` (Markdown → new docx), and
+ * Model-facing Microsoft Word (.docx) tools: `docx_read` (docx в†’ Markdown or
+ * structured JSON blocks), `docx_create` (Markdown в†’ new docx), and
  * `docx_edit` (round-trip Markdown replacement preserving document
  * properties). Reading uses the bounded `ctx.fs.readBytes` primitive; creating
  * and editing use the new binary-safe `ctx.fs.writeBytes` primitive, so the
  * sandbox fence and observation policy apply to docx mutations exactly as they
  * do to text writes.
- * @module @deepseek-ai/dsh-tool-docx
+ * @module dsh-tool-docx
  */
 
 import type { Context } from '@deepseek-ai/cordis'
@@ -25,7 +25,7 @@ export const name = 'tool-docx'
 /** Services required by the docx tool suite. */
 export const inject = ['tools', 'fs', 'systemPrompt']
 
-/** Plugin config (all optional — `Config` supplies the defaults). */
+/** Plugin config (all optional вЂ” `Config` supplies the defaults). */
 export interface Config {
   /** Inclusive byte cap on a whole `.docx` file (read + ZIP expansion). */
   maxDocxBytes?: number

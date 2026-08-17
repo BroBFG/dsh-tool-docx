@@ -8,7 +8,7 @@
  * the extended contract locally and guards it at runtime, so a host without
  * the primitives fails with a clear typed error instead of a cryptic
  * `fs.readBytes is not a function`.
- * @module @deepseek-ai/dsh-tool-docx/fs-binary
+ * @module dsh-tool-docx/fs-binary
  */
 
 import { FileSystem, type FsTarget, type FsVersion, type FsWriteIntent } from '@deepseek-ai/dsh-fs'
@@ -46,7 +46,7 @@ export function assertBinaryFs(fs: FileSystem): BinaryFileSystem {
   const binary = fs as Partial<BinaryFileSystem>
   if (typeof binary.readBytes !== 'function' || typeof binary.writeBytes !== 'function') {
     throw new DocxError(
-      'the host filesystem seam lacks the binary readBytes/writeBytes primitives — this plugin requires a deepseek-harness build that includes fs.readBytes/fs.writeBytes',
+      'the host filesystem seam lacks the binary readBytes/writeBytes primitives вЂ” this plugin requires a deepseek-harness build that includes fs.readBytes/fs.writeBytes',
       'DOCX_HOST_FS_UNSUPPORTED',
     )
   }

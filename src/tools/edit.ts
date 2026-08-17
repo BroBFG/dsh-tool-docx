@@ -3,7 +3,7 @@
  * Markdown, preserving its title/author/created properties. Reads the current
  * file (validating it is a docx), regenerates the body, and writes back with a
  * version guard so a concurrent change reports `DOCX_STALE`.
- * @module @deepseek-ai/dsh-tool-docx/tools/edit
+ * @module dsh-tool-docx/tools/edit
  */
 
 import type { Context } from '@deepseek-ai/cordis'

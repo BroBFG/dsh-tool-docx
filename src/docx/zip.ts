@@ -1,8 +1,8 @@
 /**
  * Minimal bounded ZIP reader over `yauzl`: extracts every entry of a docx
- * package into a name → bytes map. The uncompressed total is capped so a
+ * package into a name в†’ bytes map. The uncompressed total is capped so a
  * compressed bomb inside an already-bounded file cannot expand without limit.
- * @module @deepseek-ai/dsh-tool-docx/zip
+ * @module dsh-tool-docx/zip
  */
 
 import { Buffer } from 'node:buffer'
@@ -15,7 +15,7 @@ export type ZipEntries = Map<string, Buffer>
  * Read every file entry of a ZIP buffer into memory.
  * @param data - the whole archive bytes (already bounded by the caller's read cap).
  * @param maxUncompressedBytes - inclusive cap on the total uncompressed content.
- * @returns archive-name → content, directory entries omitted.
+ * @returns archive-name в†’ content, directory entries omitted.
  */
 export function readZip(data: Uint8Array, maxUncompressedBytes: number): Promise<ZipEntries> {
   return new Promise((resolve, reject) => {
