@@ -176,4 +176,4 @@ To pull in upstream changes, copy `packages/docx/tool-docx/{src,tests,README*}` 
 
 ## License
 
-MIT © 2026 FourTime. Portions of `src/sandbox.ts` are derived from [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) (MIT, Copyright (c) 2026 DeepSeek) — see [LICENSE](LICENSE).
+MIT © 2026 BroBFG. Portions of `src/sandbox.ts` are derived from [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) (MIT, Copyright (c) 2026 DeepSeek) — see [LICENSE](LICENSE).

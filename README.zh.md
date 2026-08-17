@@ -176,4 +176,4 @@ pnpm pack        # 生成 npm tarball（files：lib/index.js、lib/invariant.js�
 
 ## 许可证
 
-MIT © 2026 FourTime。`src/sandbox.ts` 的部分内容衍生自 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)（MIT，Copyright (c) 2026 DeepSeek）——见 [LICENSE](LICENSE)。
+MIT © 2026 BroBFG。`src/sandbox.ts` 的部分内容衍生自 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)（MIT，Copyright (c) 2026 DeepSeek）——见 [LICENSE](LICENSE)。
