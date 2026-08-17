@@ -1,6 +1,17 @@
 # dsh-tool-docx bundle patch: mounts the plugin into a profile layer stack.
 # The profile's own cordis.patch.yml and any --patch overlays still apply
 # after this layer; rows here can be overridden by id in later layers.
+#
+# The base bundle's `fs-sandbox` row provides ctx.fs WITHOUT the binary
+# `writeBytes` primitive; the plugin's sandboxed provider
+# (dsh-tool-docx/fs-binary-sandbox) replaces it and preserves the policy
+# fence, so docx create/edit are sandbox-enforced like every other mutation.
+# Pass this file as an overlay (pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml)
+# or merge it into the profile's own cordis.patch.yml.
+- id: fs-sandbox
+  disabled: true
 - insert:
+    - id: fs-binary-sandbox
+      name: dsh-tool-docx/fs-binary-sandbox
     - id: tool-docx
-      name: 'dsh-tool-docx'
+      name: dsh-tool-docx

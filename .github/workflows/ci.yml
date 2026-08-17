@@ -23,5 +23,9 @@ jobs:
         run: pnpm typecheck
       - name: Build
         run: pnpm build
+      # lib/ is committed (installers use the prebuilt package, no build
+      # scripts), so a source change must come with its rebuilt lib.
+      - name: Verify committed lib is fresh
+        run: git diff --exit-code -- lib/
       - name: Test
         run: pnpm test

@@ -13,33 +13,34 @@
 
 ## 安装
 
-在 DeepSeek Harness 检出（pnpm workspace）中，从本仓库添加插件：
+包自带构建好的 `lib/`（无 build 脚本），因此安装到 harness 检出时**无需在 harness 的 `pnpm-workspace.yaml` 添加 `allowBuilds` 条目**：
 
 ```sh
-pnpm add github:BroBFG/dsh-tool-docx
+# 在 DeepSeek Harness 检出（pnpm workspace）中
+pnpm add -w github:BroBFG/dsh-tool-docx
 ```
 
 或在开发时作为本地路径安装：
 
 ```sh
-pnpm add ../dsh-tool-docx
+pnpm add -w ../dsh-tool-docx
 ```
 
-然后在 harness 插件配置中挂载它：
+然后挂载到 web 配置——运行随包安装器（推荐；安装包、写入配置行、提示重启）：
 
-```yaml
-plugins:
-  - id: tool-docx
-    name: 'dsh-tool-docx'
+```sh
+node ./node_modules/dsh-tool-docx/scripts/install-web.mjs
 ```
 
-> npm 发布已计划但尚未提供；包以独立名称 `dsh-tool-docx` 发布（`dsh-tool-*` 生态惯例），不依赖 `@deepseek-ai` scope。
-
-该包还附带一个[捆绑补丁](cordis.patch.yml)（package.json 中的 `dsh.bundle.patch`），一行即可挂载插件——加载器会对已安装的插件自动应用，也可手动作为 overlay 传入：
+或把[捆绑补丁](cordis.patch.yml)作为 overlay 传入：
 
 ```sh
 pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml
 ```
+
+补丁会用插件的沙箱保持型提供者替换基础包的 `fs-sandbox` 行并挂载 docx 工具——见[二进制 fs 提供者](#二进制-fs-提供者)。之后重启 harness。
+
+> npm 发布已计划但尚未提供；包以独立名称 `dsh-tool-docx` 发布（`dsh-tool-*` 生态惯例），不依赖 `@deepseek-ai` scope。
 
 ## 工具
 

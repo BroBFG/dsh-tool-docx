@@ -13,33 +13,34 @@
 
 ## Установка
 
-Внутри checkout DeepSeek Harness (pnpm workspace) добавьте плагин из этого репозитория:
+Пакет поставляется с готовым `lib/` (без build-скриптов), поэтому при установке в checkout harness **не нужны записи `allowBuilds`** в `pnpm-workspace.yaml` harness:
 
 ```sh
-pnpm add github:BroBFG/dsh-tool-docx
+# внутри checkout DeepSeek Harness (pnpm workspace)
+pnpm add -w github:BroBFG/dsh-tool-docx
 ```
 
 или установите его как локальный путь во время разработки:
 
 ```sh
-pnpm add ../dsh-tool-docx
+pnpm add -w ../dsh-tool-docx
 ```
 
-Затем подключите его в конфигурации плагинов harness:
+Затем смонтируйте в web-профиль — запустите прилагаемый установщик (рекомендуется; ставит пакет, прописывает ряды в профиль, подсказывает перезапуск):
 
-```yaml
-plugins:
-  - id: tool-docx
-    name: 'dsh-tool-docx'
+```sh
+node ./node_modules/dsh-tool-docx/scripts/install-web.mjs
 ```
 
-> Публикация в npm запланирована, но пока недоступна; пакет поставляется под самостоятельным именем `dsh-tool-docx` (конвенция экосистемы `dsh-tool-*`), независимо от scope `@deepseek-ai`.
-
-Пакет также поставляется с [bundle-патчем](cordis.patch.yml) (на него ссылается `dsh.bundle.patch` в package.json), который монтирует плагин одной строкой — загрузчик применяет его автоматически для установленных плагинов, либо его можно передать вручную как overlay:
+или передайте [bundle-патч](cordis.patch.yml) как overlay:
 
 ```sh
 pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml
 ```
+
+Патч заменяет строку `fs-sandbox` базового бандла на песочный провайдер плагина и монтирует docx-инструменты — см. [Бинарные fs-провайдеры](#бинарные-fs-провайдеры). После этого перезапустите harness.
+
+> Публикация в npm запланирована, но пока недоступна; пакет поставляется под самостоятельным именем `dsh-tool-docx` (конвенция экосистемы `dsh-tool-*`), независимо от scope `@deepseek-ai`.
 
 ## Инструменты
 

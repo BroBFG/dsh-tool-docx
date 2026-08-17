@@ -13,33 +13,34 @@ This repository is the **standalone distribution** of the plugin. The plugin is 
 
 ## Installation
 
-Inside a DeepSeek Harness checkout (pnpm workspace), add the plugin from this repository:
+The package ships its built `lib/` (no build scripts), so installing it into a harness checkout needs **no `allowBuilds` entries** in the harness's `pnpm-workspace.yaml`:
 
 ```sh
-pnpm add github:BroBFG/dsh-tool-docx
+# inside a DeepSeek Harness checkout (pnpm workspace)
+pnpm add -w github:BroBFG/dsh-tool-docx
 ```
 
 or install it as a local path while developing:
 
 ```sh
-pnpm add ../dsh-tool-docx
+pnpm add -w ../dsh-tool-docx
 ```
 
-Then mount it in the harness plugin configuration:
+Then mount it into the web profile — either run the bundled installer (recommended; installs the package, writes the profile rows, prints the restart hint):
 
-```yaml
-plugins:
-  - id: tool-docx
-    name: 'dsh-tool-docx'
+```sh
+node ./node_modules/dsh-tool-docx/scripts/install-web.mjs
 ```
 
-> npm publication is planned but not yet available; the package ships under the standalone name `dsh-tool-docx` (the `dsh-tool-*` ecosystem convention), independent of the `@deepseek-ai` scope.
-
-The package also ships a [bundle patch](cordis.patch.yml) (referenced by `dsh.bundle.patch` in package.json) that mounts the plugin in one row — the loader applies it automatically for installed plugins, or pass it manually as an overlay:
+or apply the [bundle patch](cordis.patch.yml) as an overlay:
 
 ```sh
 pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml
 ```
+
+The patch replaces the base bundle's `fs-sandbox` row with the plugin's sandbox-preserving provider and mounts the docx tools — see [Binary fs providers](#binary-fs-providers). Restart the harness afterwards.
+
+> npm publication is planned but not yet available; the package ships under the standalone name `dsh-tool-docx` (the `dsh-tool-*` ecosystem convention), independent of the `@deepseek-ai` scope.
 
 ## Tools
 

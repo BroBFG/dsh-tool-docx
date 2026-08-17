@@ -1,7 +1,7 @@
 {
   "name": "dsh-tool-docx",
   "description": "Model-facing MS Word (.docx) tools: read documents as Markdown or structured blocks, create documents from Markdown, and edit documents round-trip; ships binary fs providers (writeBytes, incl. a sandbox-preserving one) for hosts without it",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publishConfig": {
     "access": "public"
   },
@@ -44,7 +44,8 @@
   "files": [
     "lib/*.js",
     "lib/types/**/*.d.ts",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "scripts/install-web.mjs"
   ],
   "dsh": {
     "bundle": {
@@ -60,7 +61,8 @@
     "build": "tsc -p tsconfig.json && tsdown",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "prepare": "pnpm build"
+    "verify:lib": "pnpm build && git diff --exit-code -- lib/",
+    "prepack": "pnpm build"
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.1",
