@@ -54,10 +54,16 @@ function main() {
     process.exit(1)
   }
   const existing = readFileSync(patchPath, 'utf8')
+  // The profile's empty layer is a `[]` list, possibly under comment lines;
+  // a non-empty list or an existing mount must be preserved.
+  const codeOnly = existing.split('\n').filter(line => !line.trim().startsWith('#')).join('\n').trim()
   if (existing.includes('dsh-tool-docx')) {
     console.log(`[dsh-tool-docx] already mounted in ${patchPath} — nothing to change`)
-  } else if (existing.trim() === '[]') {
-    writeFileSync(patchPath, `${MOUNT_BLOCK}\n`)
+  } else if (codeOnly === '[]') {
+    // Replace the empty `[]` list with the mount rows (a trailing `[]` would
+    // make the appended list invalid YAML).
+    const header = existing.split('\n').filter(line => line.trim().startsWith('#')).join('\n')
+    writeFileSync(patchPath, `${header}\n\n${MOUNT_BLOCK}\n`)
     console.log(`[dsh-tool-docx] mounted in ${patchPath}`)
   } else {
     writeFileSync(patchPath, `${existing.trimEnd()}\n\n${MOUNT_BLOCK}\n`)

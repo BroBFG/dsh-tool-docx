@@ -1,7 +1,7 @@
 {
   "name": "dsh-tool-docx",
   "description": "Model-facing MS Word (.docx) tools: read documents as Markdown or structured blocks, create documents from Markdown, and edit documents round-trip; ships binary fs providers (writeBytes, incl. a sandbox-preserving one) for hosts without it",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "publishConfig": {
     "access": "public"
   },
