@@ -8,7 +8,7 @@ This repository is the **standalone distribution** of the plugin. The plugin is 
 
 ## Requirements
 
-- A DeepSeek Harness host whose filesystem seam provides the **binary** primitives `fs.readBytes` and `fs.writeBytes`. `readBytes` is published in `@deepseek-ai/dsh-fs` since `0.1.0-rc.7`; `writeBytes` was introduced together with this plugin and is present in the local tree we develop against, but is not yet in any published `dsh-fs` release. On a host without the primitives, every call fails with a typed `DOCX_HOST_FS_UNSUPPORTED` error — see [Design notes](#design-notes), "Host filesystem contract".
+- A DeepSeek Harness host whose filesystem seam provides the **binary** primitives `fs.readBytes` and `fs.writeBytes`. `readBytes` is published in `@deepseek-ai/dsh-fs` since `0.1.0-rc.7`; `writeBytes` was introduced together with this plugin and is present in the local tree we develop against, but is not yet in any published `dsh-fs` release. On a host without the primitives, every call fails with a typed `DOCX_HOST_FS_UNSUPPORTED` error — see [Design notes](#design-notes), "Host filesystem contract". The package's [binary fs provider](#binary-fs-provider-fs-binary-local) closes the gap on such hosts: mount it as `ctx.fs` and the tools run unchanged.
 - The harness provides the peer services (the `0.1.0-rc.7` line): `cordis`, `dsh-tools`, `dsh-fs`, `dsh-llm`, `dsh-sandbox`, `dsh-sandbox-policy`, `dsh-system-prompt`, `dsh-invariants`, `dsh-user-approval`, `dsh-session`.
 
 ## Installation
@@ -58,6 +58,22 @@ All three resolve relative paths against the calling agent's session cwd, dispat
 | `maxDocxBytes` | 64 MiB | Inclusive byte cap on a whole `.docx` file (read + ZIP expansion). |
 | `maxMarkdownChars` | 1 000 000 | Inclusive character cap on the Markdown input to create/edit. |
 | `maxReadChars` | 200 000 | Inclusive character cap on the Markdown returned by `docx_read`. |
+
+## Binary fs provider (`fs-binary-local`)
+
+The package also ships a local filesystem provider that implements the binary `writeBytes` primitive on top of the published [`@deepseek-ai/dsh-fs-local`](https://www.npmjs.com/package/@deepseek-ai/dsh-fs-local) backend (`dsh-tool-docx/fs-binary-local`). Mount it as `ctx.fs` on a host whose filesystem seam lacks `writeBytes` (the published `dsh-fs` line ships `readBytes` only), so the docx tools run unchanged:
+
+```yaml
+plugins:
+  - id: fs-binary-local
+    name: dsh-tool-docx/fs-binary-local
+    config:
+      cwd: /path/to/workspace
+  - id: tool-docx
+    name: dsh-tool-docx
+```
+
+The provider inherits the full `LocalFileSystem` contract and adds `writeBytes` with the same probe → intent-guard (`createIfAbsent` / `replaceIfVersion`) → atomic-publish flow as the harness seam: a private owner-only staging directory, fsync, then atomic publication (a hard-link no-replace primitive for `createIfAbsent`), with per-target serialization. The first version omits the harness's Win32 DACL-preservation ceremony — a replacement inherits the owner-only ACL of the staged temp file.
 
 ## Design notes
 
@@ -169,17 +185,18 @@ Layout:
 - `src/docx/` — ZIP/XML extraction and `docx`-library generation;
 - `src/tools/` — the three tool registrations;
 - `src/fs-binary.ts` — the binary filesystem contract guard;
-- `tests/` — conversion round-trip tests and consumer tests against the published `ToolRuntime` service (exported since `dsh-tools@0.1.0-rc.7`).
+- `src/fs-binary-local.ts`, `src/fsio-bytes.ts` — the shipped binary fs provider (a `LocalFileSystem` subclass with atomic `writeBytes`);
+- `tests/` — conversion round-trip tests, provider tests, and consumer tests against the published `ToolRuntime` service (exported since `dsh-tools@0.1.0-rc.7`).
 
 ## Relationship to deepseek-harness
 
 This plugin is an **original, independent project written for DeepSeek Harness** — it plugs into the harness's public services (`tools`, `fs`, `systemPrompt`) and is developed in a local `deepseek-harness` checkout for testing against the harness. It is not a copy of a plugin from the shared `deepseek-harness` repository and is not part of it; this repository is the canonical distribution. Two implementation notes:
 
-1. `src/fs-binary.ts` (host contract guard) — the binary `readBytes`/`writeBytes` contract is part of this plugin's design. The local tree's `FileSystem` already provides both primitives (the guard is a no-op there); the published `@deepseek-ai/dsh-fs` release does not, hence the guard;
+1. `src/fs-binary.ts` (host contract guard) — the binary `readBytes`/`writeBytes` contract is part of this plugin's design. The local tree's `FileSystem` already provides both primitives (the guard is a no-op there); the published `@deepseek-ai/dsh-fs` release does not, hence the guard — and the [binary fs provider](#binary-fs-provider-fs-binary-local) ships the write side for hosts without it;
 2. `tests/` runs against the published `ToolRuntime` service (exported since `dsh-tools@0.1.0-rc.7`), so the consumer tests exercise the real registry pipeline rather than a local double.
 
 The same source lives in the local `deepseek-harness` checkout used for development (`packages/docx/tool-docx`); keep this repository in sync by copying `src` and `tests` from there (keeping `src/fs-binary.ts`, which the local tree does not need).
 
 ## License
 
-MIT © 2026 BroBFG. Portions of `src/sandbox.ts` are derived from [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) (MIT, Copyright (c) 2026 DeepSeek) — see [LICENSE](LICENSE).
+MIT © 2026 BroBFG. Portions of `src/sandbox.ts` and the atomic-write pattern in `src/fsio-bytes.ts` are derived from [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) (MIT, Copyright (c) 2026 DeepSeek) — see [LICENSE](LICENSE).

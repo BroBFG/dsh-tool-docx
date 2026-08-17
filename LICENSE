@@ -24,7 +24,8 @@ SOFTWARE.
 
 Attribution for derived code
 
-Portions of `src/sandbox.ts` are derived from the deepseek-harness project
+Portions of `src/sandbox.ts` and the atomic-write pattern in `src/fsio-bytes.ts`
+are derived from the deepseek-harness project
 (https://github.com/deepseek-ai/deepseek-harness), distributed under the MIT
 License:
 

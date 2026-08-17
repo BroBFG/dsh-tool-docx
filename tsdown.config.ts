@@ -7,7 +7,7 @@ import { defineConfig } from 'tsdown'
  * `lib/types/**\/*.d.ts` (produced by `tsc -p tsconfig.json`).
  */
 export default defineConfig({
-  entry: ['lib/types/index.js', 'lib/types/invariant.js'],
+  entry: ['lib/types/index.js', 'lib/types/fs-binary-local.js', 'lib/types/invariant.js'],
   outDir: 'lib',
   format: ['esm'],
   platform: 'node',

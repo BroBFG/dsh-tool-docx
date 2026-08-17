@@ -16,3 +16,9 @@ strictPeerDependencies: false
 # the cooldown for everything else.
 minimumReleaseAgeExclude:
   - '@deepseek-ai/*'
+
+# Native build scripts. koffi (a transitive dep of @deepseek-ai/dsh-fs-local)
+# provides the Win32 DACL-preservation helpers the local backend uses on
+# replacement; its postinstall must run for the native binding.
+allowBuilds:
+  koffi: true

@@ -8,7 +8,7 @@
 
 ## Требования
 
-- Хост DeepSeek Harness, чей слой файловой системы предоставляет **бинарные** примитивы `fs.readBytes` и `fs.writeBytes`. `readBytes` опубликован в `@deepseek-ai/dsh-fs` начиная с `0.1.0-rc.7`; `writeBytes` введён вместе с этим плагином и присутствует в локальном дереве, против которого мы разрабатываем, но его ещё нет ни в одном опубликованном релизе `dsh-fs`. На хосте без этих примитивов каждый вызов завершается типизированной ошибкой `DOCX_HOST_FS_UNSUPPORTED` — см. «Контракт файловой системы хоста» в разделе [Заметки по дизайну](#заметки-по-дизайну).
+- Хост DeepSeek Harness, чей слой файловой системы предоставляет **бинарные** примитивы `fs.readBytes` и `fs.writeBytes`. `readBytes` опубликован в `@deepseek-ai/dsh-fs` начиная с `0.1.0-rc.7`; `writeBytes` введён вместе с этим плагином и присутствует в локальном дереве, против которого мы разрабатываем, но его ещё нет ни в одном опубликованном релизе `dsh-fs`. На хосте без этих примитивов каждый вызов завершается типизированной ошибкой `DOCX_HOST_FS_UNSUPPORTED` — см. «Контракт файловой системы хоста» в разделе [Заметки по дизайну](#заметки-по-дизайну). [Бинарный fs-провайдер](#бинарный-fs-провайдер-fs-binary-local) пакета закрывает этот пробел на таких хостах: смонтируйте его как `ctx.fs` — и инструменты заработают без изменений.
 - Harness предоставляет peer-сервисы (линия `0.1.0-rc.7`): `cordis`, `dsh-tools`, `dsh-fs`, `dsh-llm`, `dsh-sandbox`, `dsh-sandbox-policy`, `dsh-system-prompt`, `dsh-invariants`, `dsh-user-approval`, `dsh-session`.
 
 ## Установка
@@ -58,6 +58,22 @@ pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml
 | `maxDocxBytes` | 64 MiB | Включительный байтовый лимит на весь файл `.docx` (чтение + распаковка ZIP). |
 | `maxMarkdownChars` | 1 000 000 | Включительный лимит символов на входной Markdown для create/edit. |
 | `maxReadChars` | 200 000 | Включительный лимит символов на Markdown, возвращаемый `docx_read`. |
+
+## Бинарный fs-провайдер (`fs-binary-local`)
+
+Пакет также поставляет локальный провайдер файловой системы, который реализует бинарный примитив `writeBytes` поверх опубликованного [`@deepseek-ai/dsh-fs-local`](https://www.npmjs.com/package/@deepseek-ai/dsh-fs-local) (`dsh-tool-docx/fs-binary-local`). Монтируйте его как `ctx.fs` на хосте, чей файловый seam не имеет `writeBytes` (в опубликованной линии `dsh-fs` есть только `readBytes`) — docx-инструменты будут работать без изменений:
+
+```yaml
+plugins:
+  - id: fs-binary-local
+    name: dsh-tool-docx/fs-binary-local
+    config:
+      cwd: /path/to/workspace
+  - id: tool-docx
+    name: dsh-tool-docx
+```
+
+Провайдер наследует весь контракт `LocalFileSystem` и добавляет `writeBytes` с тем же потоком probe → intent-охрана (`createIfAbsent` / `replaceIfVersion`) → атомарная публикация, что и в seam harness: приватный owner-only staging-каталог, fsync, затем атомарная публикация (для `createIfAbsent` — hard-link без замены), с сериализацией по таргету. Первая версия опускает Win32 DACL-церемонию harness — заменённый файл наследует owner-only ACL временного файла.
 
 ## Заметки по дизайну
 
@@ -169,17 +185,18 @@ pnpm pack        # собрать npm-тарбол (files: lib/index.js, lib/inv
 - `src/docx/` — извлечение ZIP/XML и генерация библиотекой `docx`;
 - `src/tools/` — три регистрации инструментов;
 - `src/fs-binary.ts` — защита контракта бинарной файловой системы;
-- `tests/` — тесты циклов конвертации и потребительские тесты против опубликованного сервиса `ToolRuntime` (экспортируется с `dsh-tools@0.1.0-rc.7`).
+- `src/fs-binary-local.ts`, `src/fsio-bytes.ts` — поставляемый бинарный fs-провайдер (подкласс `LocalFileSystem` с атомарным `writeBytes`);
+- `tests/` — тесты циклов конвертации, тесты провайдера и потребительские тесты против опубликованного сервиса `ToolRuntime` (экспортируется с `dsh-tools@0.1.0-rc.7`).
 
 ## Отношение к deepseek-harness
 
 Этот плагин — **оригинальный, независимый проект, написанный для DeepSeek Harness**: он подключается к публичным сервисам harness (`tools`, `fs`, `systemPrompt`) и разрабатывается в локальном checkout `deepseek-harness` для тестирования против harness. Он не является копией плагина из общего репозитория `deepseek-harness` и не является его частью; этот репозиторий — канонический канал распространения. Две заметки по реализации:
 
-1. `src/fs-binary.ts` (защита контракта хоста) — бинарный контракт `readBytes`/`writeBytes` — часть дизайна этого плагина. Локальное дерево `FileSystem` уже предоставляет оба примитива (защита там — no-op); опубликованный релиз `@deepseek-ai/dsh-fs` — нет, отсюда защита;
+1. `src/fs-binary.ts` (защита контракта хоста) — бинарный контракт `readBytes`/`writeBytes` — часть дизайна этого плагина. Локальное дерево `FileSystem` уже предоставляет оба примитива (защита там — no-op); опубликованный релиз `@deepseek-ai/dsh-fs` — нет, отсюда защита — а [бинарный fs-провайдер](#бинарный-fs-провайдер-fs-binary-local) поставляет сторону записи для хостов без неё;
 2. `tests/` работает против опубликованного сервиса `ToolRuntime` (экспортируется с `dsh-tools@0.1.0-rc.7`), поэтому потребительские тесты проходят через реальный конвейер реестра, а не локальный дублёр.
 
 Тот же исходный код находится в локальном checkout `deepseek-harness`, используемом для разработки (`packages/docx/tool-docx`); держите этот репозиторий в синхронизации, копируя `src` и `tests` оттуда (сохраняя `src/fs-binary.ts`, который локальному дереву не нужен).
 
 ## Лицензия
 
-MIT © 2026 BroBFG. Части `src/sandbox.ts` являются производными от [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) (MIT, Copyright (c) 2026 DeepSeek) — см. [LICENSE](LICENSE).
+MIT © 2026 BroBFG. Части `src/sandbox.ts` и паттерн атомарной записи в `src/fsio-bytes.ts` являются производными от [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) (MIT, Copyright (c) 2026 DeepSeek) — см. [LICENSE](LICENSE).
