@@ -4,11 +4,11 @@
 
 面向模型的微软 Word（`.docx`）工具，用于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)：`docx_read` 将文档提取为 Markdown 或结构化 JSON 块，`docx_create` 从 Markdown 生成新的 `.docx`，`docx_edit` 从 Markdown 替换文档内容并保留其 title/author/created 属性。`.docx` 是 ZIP 封装的 XML 部件，因此每个工具都通过有界的 `ctx.fs.readBytes` 原语读取整个包，并通过二进制安全的 `ctx.fs.writeBytes` 原语写入包——与文本工具使用相同的原子、沙箱围栏变更。
 
-本仓库是插件的**独立分发**。该插件**为 DeepSeek Harness 编写**——是 harness 的插件，而不是从中提取的组件。它可以针对已发布的 `@deepseek-ai/*` 包独立构建和测试，因此可以安装到任何 harness 检出中。其源码也在 `deepseek-harness` 检出（`packages/docx/tool-docx`）中开发，尚未合并到公开的 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 仓库。
+本仓库是插件的**独立分发**。该插件是**为 DeepSeek Harness 编写的原创作品**——由本项目独立开发，最初在本地 `deepseek-harness` 检出中进行（harness 是它的运行目标），而非共享仓库中某个插件的副本。它接入 harness 的 `tools`、`fs` 与 `systemPrompt` 服务，并可针对已发布的 `@deepseek-ai/*` 包独立构建和测试，因此可以安装到任何 harness 检出中。
 
 ## 需求
 
-- 一个文件系统 seam 提供**二进制**原语 `fs.readBytes` 和 `fs.writeBytes` 的 DeepSeek Harness 宿主。两者都存在于 deepseek-harness 开发树中；`readBytes` 已在公开的 `master` 上，而 `writeBytes` 是较新的补充，尚未出现在任何已发布版本中（已发布的 `@deepseek-ai/dsh-fs@0.0.1-rc.1` 只提供文本操作）——因此请从开发树构建 harness。在没有这些原语的宿主机上，每次调用都会以带类型的 `DOCX_HOST_FS_UNSUPPORTED` 错误失败——见[宿主文件系统契约](#宿主文件系统契约)。
+- 一个文件系统 seam 提供**二进制**原语 `fs.readBytes` 和 `fs.writeBytes` 的 DeepSeek Harness 宿主。`readBytes` 已存在于 deepseek-harness 的公开 `master` 上；`writeBytes` 与本插件一同引入，存在于我们开发的本地树中，但尚未出现在任何已发布版本中（已发布的 `@deepseek-ai/dsh-fs@0.0.1-rc.1` 只提供文本操作）。在没有这些原语的宿主机上，每次调用都会以带类型的 `DOCX_HOST_FS_UNSUPPORTED` 错误失败——见[宿主文件系统契约](#宿主文件系统契约)。
 - harness 提供 peer 服务：`cordis`、`dsh-tools`、`dsh-fs`、`dsh-llm`、`dsh-sandbox`、`dsh-sandbox-policy`、`dsh-system-prompt`、`dsh-invariants`、`dsh-user-approval`、`dsh-session`。
 
 ## 安装
@@ -59,7 +59,7 @@ plugins:
 - **生成**（`src/docx/generate.ts`）用 `docx` 库渲染块模型：ATX 标题、带样式的行内 run、9 级 bullet/数字编号、管道表格和 `[text](url)` 外部超链接。`parseMarkdown`（src/markdown.ts）接受提取器输出的子集，因此读 → 改 → 写往返是稳定的。
 - **上限在 seam 层而非工具层强制**——整文件字节上限流入 `ctx.fs.readBytes`（`FS_TOO_LARGE` 映射为 `DOCX_TOO_LARGE`），ZIP 读取器对未压缩总量施加同一上限，因此压缩炸弹无法无界展开。
 - **沙箱对等**——`src/sandbox.ts` 镜像 `dsh-tool-fs` 的升权 API（仅在受限后端下暴露 `sandbox_permissions`/`justification`，拒绝标记映射）；提取共享控制器属于延后工作（见下文）。
-- **宿主文件系统契约**——`src/fs-binary.ts` 将二进制契约（`readBytes`/`writeBytes`）声明为已发布 `FileSystem` 类型的本地扩展，并在运行时守卫它。在开发树上守卫是无操作；在没有二进制原语的宿主机上它抛出 `DOCX_HOST_FS_UNSUPPORTED` 并指向此需求，而不是晦涩的 `fs.readBytes is not a function`。
+- **宿主文件系统契约**——`src/fs-binary.ts` 将工具所需的二进制契约（`readBytes`/`writeBytes`）声明为已发布 `FileSystem` 类型的本地扩展，并在运行时守卫它。在我们开发的本地树上守卫是无操作；在没有二进制原语的宿主机上它抛出 `DOCX_HOST_FS_UNSUPPORTED` 并指向此需求，而不是晦涩的 `fs.readBytes is not a function`。
 
 ## 模型体验
 
@@ -167,12 +167,12 @@ pnpm pack        # 生成 npm tarball（files：lib/index.js、lib/invariant.js�
 
 ## 与 deepseek-harness 的关系
 
-该插件**为 DeepSeek Harness 编写**——它接入 harness 的 `tools`、`fs` 与 `systemPrompt` 服务——而非从中提取。其源码在 `deepseek-harness` 检出的 `packages/docx/tool-docx` 中开发，并在此作为独立分发镜像；公开的 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 仓库尚不包含它（`packages/docx` 未合并到上游）。此处仅有两处小的差异：
+该插件是**为 DeepSeek Harness 编写的原创独立项目**——它接入 harness 的公开服务（`tools`、`fs`、`systemPrompt`），并在本地 `deepseek-harness` 检出中开发以对 harness 进行测试。它不是共享 `deepseek-harness` 仓库中某个插件的副本，也不属于该仓库；本仓库是规范的发行渠道。两点实现说明：
 
-1. `src/fs-binary.ts`（宿主契约守卫）——开发树的 `FileSystem` 已声明 `readBytes`/`writeBytes`，因此守卫在那里是无操作；
-2. `tests/tool-runtime-shim.ts`——harness 测试使用真实的 `ToolRuntime` 服务。
+1. `src/fs-binary.ts`（宿主契约守卫）——二进制 `readBytes`/`writeBytes` 契约是插件设计的一部分。本地树的 `FileSystem` 已提供这两个原语（守卫在那里是无操作）；已发布的 `@deepseek-ai/dsh-fs` 版本没有，因此需要守卫；
+2. `tests/tool-runtime-shim.ts`——harness 的 `ToolRuntime` 服务的最小测试替身，因为已发布的 `dsh-tools` 版本尚未导出该服务类。
 
-拉取开发树变更时，从新的 harness 检出复制 `packages/docx/tool-docx/{src,tests,README*}`（保留 `src/fs-binary.ts` 与垫片）。
+同一份源码位于开发所用的本地 `deepseek-harness` 检出（`packages/docx/tool-docx`）中；从那里复制 `src` 与 `tests` 以保持本仓库同步（保留 `src/fs-binary.ts` 与垫片）。
 
 ## 许可证
 
