@@ -22,6 +22,13 @@ import { fileURLToPath } from 'node:url'
 
 const SELF_DIR = fileURLToPath(new URL('.', import.meta.url))
 const MOUNT_BLOCK = readFileSync(join(SELF_DIR, '..', 'cordis.patch.yml'), 'utf8').trim()
+// On Windows pnpm is a .cmd shim; Node cannot spawn it directly, so it goes
+// through cmd.exe (same as the harness launcher does).
+function runPnpm(args) {
+  return process.platform === 'win32'
+    ? spawnSync('cmd.exe', ['/d', '/s', '/c', 'pnpm', ...args], { stdio: 'inherit' })
+    : spawnSync('pnpm', args, { stdio: 'inherit' })
+}
 
 function dshHome() {
   return process.env.DSH_HOME || join(homedir(), '.dsh')
@@ -33,9 +40,9 @@ function main() {
 
   // 1. Install the package into the harness checkout (cwd).
   console.log('[dsh-tool-docx] installing github:BroBFG/dsh-tool-docx into the harness checkout…')
-  const install = spawnSync('pnpm', ['add', '-w', 'github:BroBFG/dsh-tool-docx'], { stdio: 'inherit' })
-  if (install.status !== 0) {
-    console.error('[dsh-tool-docx] pnpm add failed; run it manually:  pnpm add -w github:BroBFG/dsh-tool-docx')
+  const install = runPnpm(['add', '-w', 'github:BroBFG/dsh-tool-docx'])
+  if (install.error || install.status !== 0) {
+    console.error(`[dsh-tool-docx] pnpm add failed${install.error ? ` (${install.error.message})` : ''}; run it manually:  pnpm add -w github:BroBFG/dsh-tool-docx`)
     process.exit(install.status ?? 1)
   }
 
