@@ -2,6 +2,8 @@
 
 [English](README.md) | 中文 | [Русский](README.ru.md)
 
+路线图：[English](ROADMAP.md) · [中文](ROADMAP.zh.md) · [Русский](ROADMAP.ru.md)
+
 面向模型的微软 Word（`.docx`）工具，用于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)：`docx_read` 将文档提取为 Markdown 或结构化 JSON 块，`docx_create` 从 Markdown 生成新的 `.docx`，`docx_edit` 从 Markdown 替换文档内容并保留其 title/author/created 属性。`.docx` 是 ZIP 封装的 XML 部件，因此每个工具都通过有界的 `ctx.fs.readBytes` 原语读取整个包，并通过插件的 `fsBinary` 二进制写入服务（或原生提供 `writeBytes` 的宿主 `ctx.fs`）写入包——与文本工具使用相同的原子、沙箱围栏变更，且从不替换宿主自身的文件系统。
 
 本仓库是插件的**独立分发**。该插件是**为 DeepSeek Harness 编写的原创作品**——由本项目独立开发，最初在本地 `deepseek-harness` 检出中进行（harness 是它的运行目标），而非共享仓库中某个插件的副本。它接入 harness 的 `tools`、`fs` 与 `systemPrompt` 服务，并可针对已发布的 `@deepseek-ai/*` 包独立构建和测试，因此可以安装到任何 harness 检出中。

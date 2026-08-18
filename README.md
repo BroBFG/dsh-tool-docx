@@ -2,6 +2,8 @@
 
 English | [中文](README.zh.md) | [Русский](README.ru.md)
 
+Roadmap: [English](ROADMAP.md) · [中文](ROADMAP.zh.md) · [Русский](ROADMAP.ru.md)
+
 Model-facing Microsoft Word (`.docx`) tools for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): `docx_read` extracts a document as Markdown or structured JSON blocks, `docx_create` generates a new `.docx` from Markdown, and `docx_edit` replaces a document's content from Markdown while preserving its title/author/created properties. `.docx` is a ZIP of XML parts, so every tool reads the whole package through the bounded `ctx.fs.readBytes` primitive and writes packages through the plugin's `fsBinary` binary write service (or a host `ctx.fs` that provides `writeBytes` natively) — the same atomic, sandbox-fenced mutations the text tools use, without ever replacing the host's own filesystem.
 
 This repository is the **standalone distribution** of the plugin. The plugin is **original work written for DeepSeek Harness** — an independent plugin developed by this project, initially in a local `deepseek-harness` checkout (the harness is its runtime target), not a copy of a plugin from the shared repository. It plugs into the harness's `tools`, `fs`, and `systemPrompt` services, and it builds and tests on its own against the published `@deepseek-ai/*` packages, so it can be installed into any harness checkout.
