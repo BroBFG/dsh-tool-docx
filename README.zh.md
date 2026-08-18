@@ -168,6 +168,7 @@ MS Word .docx files are binary (ZIP+XML) and the read tool cannot read them. Use
 - **合并单元格近似**——`gridSpan`/`vMerge` 降级为普通管道表格单元格并给出警告；脚注、尾注、文本框和分页符会被丢弃（含警告）。
 - **沙箱控制器与 `dsh-tool-fs` 重复**——提取共享的 `FsSandboxController` 属于延后工作；在此之前两份拷贝必须保持同步。
 - **Markdown 输入子集**——引用块、水平线、嵌套围栏和图片无法表示；它们降级为段落并给出警告（围栏代码变成代码样式段落）。
+- **tsx 源码运行下的结构化错误码**——当 harness 从源码启动（`node --import tsx/esm`，开发启动器）时，healed `$DSH_HOME/profiles/node_modules` junction 会将 peer Service Definition 包解析为第二个模块实例，因此插件错误无法通过宿主的 `instanceof HarnessError` 检查，`error.info.code` 会从工具结果中省略。面向模型的消息（包括 `[sandbox: …]` 标记和升权提示）不受影响；built-bin 启动（普通 Node）共享同一实例并保留错误码。
 
 ## 开发
 

@@ -168,6 +168,7 @@ Append-only; newly visible content follows the reusable request prefix and does 
 - **Merged table cells approximate** — `gridSpan`/`vMerge` degrade to plain pipe-table cells with a warning; footnotes, endnotes, text boxes, and page breaks are dropped (warnings included).
 - **The sandbox controller duplicates `dsh-tool-fs`** — extracting a shared `FsSandboxController` is deferred; the two copies must be kept in sync until then.
 - **Markdown input subset** — blockquotes, horizontal rules, nested fences, and images are not represented; they degrade to paragraphs with a warning (fenced code becomes code-styled paragraphs).
+- **Structured error codes under the tsx source run** — when the harness launches from source (`node --import tsx/esm`, the dev launcher), the healed `$DSH_HOME/profiles/node_modules` junction resolves as a second module instance of the peer Service Definition packages, so plugin errors fail the host's `instanceof HarnessError` check and `error.info.code` is omitted from tool results. The model-facing message — including the `[sandbox: …]` markers and escalation hints — is unaffected, and built-bin launches (plain Node) share one instance and preserve the codes.
 
 ## Development
 
