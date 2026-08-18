@@ -19,7 +19,7 @@ import type { DocxWriteValue } from '../types.ts'
 import type { DocxToolCaps } from '../caps.ts'
 import { DocxSandboxController } from '../sandbox.ts'
 import { assertSupportedExtension, emitAbsent, emitObserved, requirePath, resolveOptions } from '../tool-utils.ts'
-import { assertBinaryFs } from '../fs-binary.ts'
+import { requireWriteBytes } from '../fs-binary.ts'
 
 interface EditArgs {
   file_path: string
@@ -38,7 +38,8 @@ function parseEditArgs(args: EditArgs, maxMarkdownChars: number): { filePath: st
 
 /**
  * Register the `docx_edit` tool.
- * @param ctx - the plugin context; execution uses its `fs` service.
+ * @param ctx - the plugin context; execution uses its `fs` service for
+ * resolution/reads and the `fsBinary` binary writer for the mutation.
  * @param caps - the deployment's resolved caps.
  * @param sandbox - the shared sandbox-escalation API.
  */
@@ -79,7 +80,8 @@ export function applyEditTool(ctx: Context, caps: DocxToolCaps, sandbox: DocxSan
     async execute(args: EditArgs, exec) {
       const input = parseEditArgs(args, caps.maxMarkdownChars)
       assertSupportedExtension(input.filePath)
-      const fs = assertBinaryFs(ctx.fs)
+      const fs = ctx.fs
+      const writeBytes = requireWriteBytes(ctx)
       const sandboxPolicy = await sandbox.resolvePolicy('docx_edit', args, exec)
 
       const target = await fs.resolve(input.filePath, resolveOptions(exec))
@@ -107,7 +109,7 @@ export function applyEditTool(ctx: Context, caps: DocxToolCaps, sandbox: DocxSan
       const intent = await ctx.waterfall('fs/write-intent', target, exec, () => ({ kind: 'replaceIfVersion', version: info.version }))
       let outcome
       try {
-        outcome = await fs.writeBytes(target, buffer, intent, exec.signal, sandboxPolicy)
+        outcome = await writeBytes(target, buffer, intent, exec.signal, sandboxPolicy)
       } catch (error: unknown) {
         throw mapFsError(sandbox.mapError(error, sandboxPolicy))
       }

@@ -15,7 +15,6 @@ import { DocxError, mapFsError } from '../error.ts'
 import type { DocxReadValue } from '../types.ts'
 import type { DocxToolCaps } from '../caps.ts'
 import { assertSupportedExtension, emitAbsent, emitObserved, requirePath, resolveOptions } from '../tool-utils.ts'
-import { assertBinaryFs } from '../fs-binary.ts'
 
 interface ReadArgs {
   file_path: string
@@ -40,7 +39,8 @@ function renderReadValue(value: DocxReadValue, maxChars: number): string {
 
 /**
  * Register the `docx_read` tool and its system-prompt guidance.
- * @param ctx - the plugin context; execution uses its `fs` service.
+ * @param ctx - the plugin context; execution uses its `fs` service (`readBytes`
+ * is part of the published filesystem contract since rc.7).
  * @param caps - the deployment's resolved caps.
  */
 export function applyReadTool(ctx: Context, caps: DocxToolCaps): void {
@@ -100,7 +100,7 @@ export function applyReadTool(ctx: Context, caps: DocxToolCaps): void {
     async execute(args: ReadArgs, exec) {
       const input = parseReadArgs(args)
       assertSupportedExtension(input.filePath)
-      const fs = assertBinaryFs(ctx.fs)
+      const fs = ctx.fs
       const target = await fs.resolve(input.filePath, resolveOptions(exec))
       const info = await fs.stat(target, exec.signal)
       if (!info) {

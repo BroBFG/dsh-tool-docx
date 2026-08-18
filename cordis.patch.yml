@@ -1,17 +1,18 @@
 # dsh-tool-docx bundle patch: mounts the plugin into a profile layer stack.
-# The profile's own cordis.patch.yml and any --patch overlays still apply
-# after this layer; rows here can be overridden by id in later layers.
+# Applied as a bundle layer (after dsh-base and the mode bundle) when the
+# package is installed into a profile with `dsh plugin --profile <name> add`.
 #
-# The base bundle's `fs-sandbox` row provides ctx.fs WITHOUT the binary
-# `writeBytes` primitive; the plugin's sandboxed provider
-# (dsh-tool-docx/fs-binary-sandbox) replaces it and preserves the policy
-# fence, so docx create/edit are sandbox-enforced like every other mutation.
-# Pass this file as an overlay (pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml)
-# or merge it into the profile's own cordis.patch.yml.
-- id: fs-sandbox
-  disabled: true
+# The base bundle's `fs-sandbox` row keeps providing `ctx.fs` UNCHANGED. This
+# plugin adds two rows next to it: `fs-binary-sandbox` registers the binary
+# `writeBytes` primitive as a SEPARATE `fsBinary` service (fenced by the same
+# per-call policy as every sandbox mutation), and `tool-docx` mounts the docx
+# tool suite, which resolves the binary writer from `fsBinary` (or a host
+# `ctx.fs` that natively provides `writeBytes`) at call time. The host
+# filesystem is never replaced, so this bundle cannot break the harness boot —
+# at worst, without the provider, the mutating docx tools report
+# `DOCX_HOST_FS_UNSUPPORTED`.
 - insert:
     - id: fs-binary-sandbox
-      name: dsh-tool-docx/fs-binary-sandbox
+      name: dsh-tool-docx/fs-binary-sandbox-plugin
     - id: tool-docx
       name: dsh-tool-docx

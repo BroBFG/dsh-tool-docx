@@ -18,7 +18,7 @@ import type { DocxWriteValue } from '../types.ts'
 import type { DocxToolCaps } from '../caps.ts'
 import { DocxSandboxController } from '../sandbox.ts'
 import { assertSupportedExtension, emitObserved, requirePath, resolveOptions } from '../tool-utils.ts'
-import { assertBinaryFs } from '../fs-binary.ts'
+import { requireWriteBytes } from '../fs-binary.ts'
 
 interface CreateArgs {
   file_path: string
@@ -47,7 +47,8 @@ function parseCreateArgs(
 
 /**
  * Register the `docx_create` tool.
- * @param ctx - the plugin context; execution uses its `fs` service.
+ * @param ctx - the plugin context; execution uses its `fs` service for
+ * resolution/reads and the `fsBinary` binary writer for the mutation.
  * @param caps - the deployment's resolved caps.
  * @param sandbox - the shared sandbox-escalation API.
  */
@@ -81,7 +82,8 @@ export function applyCreateTool(ctx: Context, caps: DocxToolCaps, sandbox: DocxS
     async execute(args: CreateArgs, exec) {
       const input = parseCreateArgs(args, caps.maxMarkdownChars)
       assertSupportedExtension(input.filePath)
-      const fs = assertBinaryFs(ctx.fs)
+      const fs = ctx.fs
+      const writeBytes = requireWriteBytes(ctx)
       const sandboxPolicy = await sandbox.resolvePolicy('docx_create', args, exec)
       const warnings: string[] = []
       const blocks = parseMarkdown(input.markdown, warnings)
@@ -97,7 +99,7 @@ export function applyCreateTool(ctx: Context, caps: DocxToolCaps, sandbox: DocxS
       const intent = await ctx.waterfall('fs/write-intent', target, exec, () => ({ kind: 'createIfAbsent' as const }))
       let outcome
       try {
-        outcome = await fs.writeBytes(target, buffer, intent, exec.signal, sandboxPolicy)
+        outcome = await writeBytes(target, buffer, intent, exec.signal, sandboxPolicy)
       } catch (error: unknown) {
         throw mapFsError(sandbox.mapError(error, sandboxPolicy))
       }

@@ -1,11 +1,14 @@
 /**
- * Model-facing Microsoft Word (.docx) tools: `docx_read` (docx в†’ Markdown or
- * structured JSON blocks), `docx_create` (Markdown в†’ new docx), and
+ * Model-facing Microsoft Word (.docx) tools: `docx_read` (docx → Markdown or
+ * structured JSON blocks), `docx_create` (Markdown → new docx), and
  * `docx_edit` (round-trip Markdown replacement preserving document
- * properties). Reading uses the bounded `ctx.fs.readBytes` primitive; creating
- * and editing use the new binary-safe `ctx.fs.writeBytes` primitive, so the
- * sandbox fence and observation policy apply to docx mutations exactly as they
- * do to text writes.
+ * properties). Reading uses the bounded `ctx.fs.readBytes` primitive (part of
+ * the published filesystem contract since rc.7); creating and editing use a
+ * binary writer resolved at call time — the plugin's `fsBinary` service
+ * (`dsh-tool-docx/fs-binary-sandbox-plugin` / `fs-binary-local-plugin`) or a
+ * host `ctx.fs` that natively provides `writeBytes` — so the sandbox fence and
+ * observation policy apply to docx mutations exactly as they do to text
+ * writes, without ever replacing the host's own `ctx.fs`.
  * @module dsh-tool-docx
  */
 

@@ -2,43 +2,28 @@
 
 [English](README.md) | 中文 | [Русский](README.ru.md)
 
-面向模型的微软 Word（`.docx`）工具，用于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)：`docx_read` 将文档提取为 Markdown 或结构化 JSON 块，`docx_create` 从 Markdown 生成新的 `.docx`，`docx_edit` 从 Markdown 替换文档内容并保留其 title/author/created 属性。`.docx` 是 ZIP 封装的 XML 部件，因此每个工具都通过有界的 `ctx.fs.readBytes` 原语读取整个包，并通过二进制安全的 `ctx.fs.writeBytes` 原语写入包——与文本工具使用相同的原子、沙箱围栏变更。
+面向模型的微软 Word（`.docx`）工具，用于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)：`docx_read` 将文档提取为 Markdown 或结构化 JSON 块，`docx_create` 从 Markdown 生成新的 `.docx`，`docx_edit` 从 Markdown 替换文档内容并保留其 title/author/created 属性。`.docx` 是 ZIP 封装的 XML 部件，因此每个工具都通过有界的 `ctx.fs.readBytes` 原语读取整个包，并通过插件的 `fsBinary` 二进制写入服务（或原生提供 `writeBytes` 的宿主 `ctx.fs`）写入包——与文本工具使用相同的原子、沙箱围栏变更，且从不替换宿主自身的文件系统。
 
 本仓库是插件的**独立分发**。该插件是**为 DeepSeek Harness 编写的原创作品**——由本项目独立开发，最初在本地 `deepseek-harness` 检出中进行（harness 是它的运行目标），而非共享仓库中某个插件的副本。它接入 harness 的 `tools`、`fs` 与 `systemPrompt` 服务，并可针对已发布的 `@deepseek-ai/*` 包独立构建和测试，因此可以安装到任何 harness 检出中。
 
 ## 需求
 
-- 一个文件系统 seam 提供**二进制**原语 `fs.readBytes` 和 `fs.writeBytes` 的 DeepSeek Harness 宿主。`readBytes` 自 `@deepseek-ai/dsh-fs@0.1.0-rc.7` 起已发布；`writeBytes` 与本插件一同引入，存在于我们开发的本地树中，但尚未出现在任何已发布的 `dsh-fs` 版本中。在没有这些原语的宿主机上，每次调用都会以带类型的 `DOCX_HOST_FS_UNSUPPORTED` 错误失败——见[设计说明](#设计说明)中的“宿主文件系统契约”。本包的[二进制 fs 提供者](#二进制-fs-提供者)可在这类宿主机上补齐：挂载其中一个作为 `ctx.fs`，工具即可原样运行。
+- 一个文件系统 seam 提供**读取**原语 `fs.readBytes` 的 DeepSeek Harness 宿主（`0.1.0-rc.7` 线）——`readBytes` 自 `@deepseek-ai/dsh-fs@0.1.0-rc.7` 起已发布。**写入**侧（`writeBytes`）不在任何已发布的 `dsh-fs` 版本中，因此捆绑包会挂载插件的[二进制 fs 提供者](#二进制-fs-提供者)：一个独立的 `fsBinary` 服务，在不触碰 `ctx.fs` 的前提下实现 `writeBytes`（沙箱宿主下带围栏）。没有任何二进制写入器——既无 `fsBinary` 服务也无原生 `ctx.fs.writeBytes` 时——`docx_read` 仍可工作，而 `docx_create`/`docx_edit` 会以带类型的 `DOCX_HOST_FS_UNSUPPORTED` 错误失败并指明修复方式。
 - harness 提供 peer 服务（`0.1.0-rc.7` 线）：`cordis`、`dsh-tools`、`dsh-fs`、`dsh-llm`、`dsh-sandbox`、`dsh-sandbox-policy`、`dsh-system-prompt`、`dsh-invariants`、`dsh-user-approval`、`dsh-session`。
 
 ## 安装
 
-包自带构建好的 `lib/`（无 build 脚本），因此安装到 harness 检出时**无需在 harness 的 `pnpm-workspace.yaml` 添加 `allowBuilds` 条目**：
+官方安装路径是 harness 自带的插件管理器——一条命令即可将包安装到配置文件，profile 启动器会自动激活捆绑包的 [`cordis.patch.yml`](cordis.patch.yml) 层（包声明了 `dsh.bundle.patch`）：
 
 ```sh
-# 在 DeepSeek Harness 检出（pnpm workspace）中
-pnpm add -w github:BroBFG/dsh-tool-docx
+dsh plugin --profile web add github:BroBFG/dsh-tool-docx#v0.5.0
 ```
 
-或在开发时作为本地路径安装：
+`dsh plugin` 会在配置文件目录内运行 pnpm，并根据已安装状态协调 `dsh.profile.bundles`，因此无需其他任何操作——不需要 `allowBuilds` 条目（包自带构建好的 `lib/`，没有 build 脚本）、不需要手工编辑 `cordis.patch.yml`、不需要 `--patch` overlay。之后重启 harness。
 
-```sh
-pnpm add -w ../dsh-tool-docx
-```
-
-然后挂载到 web 配置——运行随包安装器（推荐；安装包、写入配置行、提示重启）：
-
-```sh
-node ./node_modules/dsh-tool-docx/scripts/install-web.mjs
-```
-
-或把[捆绑补丁](cordis.patch.yml)作为 overlay 传入：
-
-```sh
-pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml
-```
-
-补丁会用插件的沙箱保持型提供者替换基础包的 `fs-sandbox` 行并挂载 docx 工具——见[二进制 fs 提供者](#二进制-fs-提供者)。之后重启 harness。
+- **更新**：`dsh plugin --profile web update dsh-tool-docx`，或用新 tag 重新 `add`。
+- **移除**：`dsh plugin --profile web remove dsh-tool-docx`。
+- **本地开发**：`dsh plugin --profile web add ../dsh-tool-docx`（相对 spec 以调用目录为锚点）或 `dsh plugin --profile web add link:../dsh-tool-docx`。
 
 > npm 发布已计划但尚未提供；包以独立名称 `dsh-tool-docx` 发布（`dsh-tool-*` 生态惯例），不依赖 `@deepseek-ai` scope。
 
@@ -62,14 +47,22 @@ pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml
 
 ## 二进制 fs 提供者
 
-该包提供两个可直接替换的 `ctx.fs` 提供者，在文件系统 seam 缺少 `writeBytes` 的宿主（已发布的 `dsh-fs` 线只有 `readBytes`）上实现二进制 `writeBytes` 原语，docx 工具即可原样运行：
+基础包的 `fs-sandbox` 行继续**原样**提供 `ctx.fs`。捆绑包在它旁边添加 docx 工具和一个二进制提供者，后者将二进制 `writeBytes` 原语注册为**独立的 `fsBinary` 服务**——宿主文件系统永远不会被替换，因此该插件不可能破坏 harness 启动；最坏情况下，没有提供者时变更类工具会报告 `DOCX_HOST_FS_UNSUPPORTED`：
 
-- **`dsh-tool-docx/fs-binary-sandbox`**（沙箱宿主推荐）——扩展已发布的 [`@deepseek-ai/dsh-fs-sandbox`](https://www.npmjs.com/package/@deepseek-ai/dsh-fs-sandbox) `SandboxedFileSystem`（即 harness 挂载的 `ctx.fs`），并让 `writeBytes` 走**相同的策略围栏**：`workspace-write` 包含检查、`read-only` 拒绝、`danger-full-access` 放行、拒绝时 `FS_SANDBOX_DENIED`。用它替换 harness 的 `fs-sandbox` 行。
-- **`dsh-tool-docx/fs-binary-local`**——扩展已发布的 [`@deepseek-ai/dsh-fs-local`](https://www.npmjs.com/package/@deepseek-ai/dsh-fs-local) `LocalFileSystem` 并添加 `writeBytes`，不带策略围栏；用于最小环境（测试、headless 脚本）或宿主已在提供者之上围栏的场景。
+- **`dsh-tool-docx/fs-binary-sandbox-plugin`**（捆绑包挂载；沙箱宿主推荐）——注册的 `fsBinary.writeBytes` 与每次沙箱变更走**相同的按调用策略围栏**：`workspace-write` 包含检查、`read-only` 拒绝、`danger-full-access` 放行、拒绝时 `FS_SANDBOX_DENIED`（在工具层映射为 `DOCX_SANDBOX_DENIED`）。
+- **`dsh-tool-docx/fs-binary-local-plugin`**——注册**无围栏**的 `fsBinary.writeBytes`，用于最小环境（测试、headless 脚本）或宿主已在提供者之上围栏的场景。要改用它而不是沙箱版本，可在配置文件的 `cordis.patch.yml` 中覆盖捆绑包行：
+
+  ```yaml
+  - id: fs-binary-sandbox
+    disabled: true
+  - insert:
+      - id: fs-binary-local
+        name: dsh-tool-docx/fs-binary-local-plugin
+  ```
 
 两者都使用与 harness seam 相同的 probe → intent 守卫（`createIfAbsent` / `replaceIfVersion`）→ 原子发布流程：私有 owner-only staging 目录、fsync、然后原子发布（`createIfAbsent` 用硬链接 no-replace 原语），并按目标串行化。第一版省略 harness 的 Win32 DACL 保留仪式——替换文件继承暂存临时文件的所有者 ACL。
 
-用沙箱提供者替换 harness 的 `fs-sandbox` 行：
+对于想刻意把完整后端**挂载为 `ctx.fs`**（替换 `fs-sandbox`）的宿主，包还提供提供者类 `dsh-tool-docx/fs-binary-sandbox` 与 `dsh-tool-docx/fs-binary-local`；替换行的配方仍然适用：
 
 ```yaml
 - id: fs-sandbox
@@ -87,7 +80,7 @@ pnpm dsh web --patch ./node_modules/dsh-tool-docx/cordis.patch.yml
 - **生成**（`src/docx/generate.ts`）用 `docx` 库渲染块模型：ATX 标题、带样式的行内 run、9 级 bullet/数字编号、管道表格和 `[text](url)` 外部超链接。`parseMarkdown`（src/markdown.ts）接受提取器输出的子集，因此读 → 改 → 写往返是稳定的。
 - **上限在 seam 层而非工具层强制**——整文件字节上限流入 `ctx.fs.readBytes`（`FS_TOO_LARGE` 映射为 `DOCX_TOO_LARGE`），ZIP 读取器对未压缩总量施加同一上限，因此压缩炸弹无法无界展开。
 - **沙箱对等**——`src/sandbox.ts` 镜像 `dsh-tool-fs` 的升权 API（仅在受限后端下暴露 `sandbox_permissions`/`justification`，拒绝标记映射）；提取共享控制器属于延后工作（见下文）。
-- **宿主文件系统契约**——`src/fs-binary.ts` 将工具所需的二进制契约（`readBytes`/`writeBytes`）声明为已发布 `FileSystem` 类型的本地扩展，并在运行时守卫它。在我们开发的本地树上守卫是无操作；在没有二进制原语的宿主机上它抛出 `DOCX_HOST_FS_UNSUPPORTED` 并指向此需求，而不是晦涩的 `fs.readBytes is not a function`。
+- **宿主文件系统契约**——`src/fs-binary.ts` 声明工具所需的二进制契约，并在调用时解析写入器：优先使用已挂载的 `fsBinary` 服务，否则使用原生提供 `writeBytes` 的宿主 `ctx.fs`。没有任何二进制写入器时，它抛出 `DOCX_HOST_FS_UNSUPPORTED` 并指明修复方式，而不是晦涩的 `fs.writeBytes is not a function`；`docx_read` 只需已发布的 `ctx.fs.readBytes`。
 
 ## 模型体验
 
@@ -190,18 +183,19 @@ pnpm pack        # 生成 npm tarball（files：lib/index.js、lib/invariant.js�
 
 - `src/docx/`——ZIP/XML 提取与 `docx` 库生成；
 - `src/tools/`——三个工具注册；
-- `src/fs-binary.ts`——二进制文件系统契约守卫；
-- `src/fs-binary-local.ts`、`src/fs-binary-sandbox.ts`、`src/fsio-bytes.ts`、`src/path-contains.ts`——随包发布的二进制 fs 提供者（普通与沙箱围栏两种 `writeBytes`，外加原子写入器与包含性辅助）；
+- `src/fs-binary.ts`——二进制文件系统契约与调用时写入器解析（`fsBinary` 服务或原生 `ctx.fs.writeBytes`）；
+- `src/fs-binary-local.ts`、`src/fs-binary-sandbox.ts`、`src/fsio-bytes.ts`、`src/path-contains.ts`——二进制 fs 提供者类以及原子写入器与包含性辅助；
+- `src/fs-binary-sandbox-plugin.ts`、`src/fs-binary-local-plugin.ts`——注册 `fsBinary` 服务的命名空间插件（捆绑包的默认挂载）；
 - `tests/`——转换往返测试、提供者测试与针对已发布 `ToolRuntime` 服务的消费者测试（自 `dsh-tools@0.1.0-rc.7` 起导出）。
 
 ## 与 deepseek-harness 的关系
 
 该插件是**为 DeepSeek Harness 编写的原创独立项目**——它接入 harness 的公开服务（`tools`、`fs`、`systemPrompt`），并在本地 `deepseek-harness` 检出中开发以对 harness 进行测试。它不是共享 `deepseek-harness` 仓库中某个插件的副本，也不属于该仓库；本仓库是规范的发行渠道。两点实现说明：
 
-1. `src/fs-binary.ts`（宿主契约守卫）——二进制 `readBytes`/`writeBytes` 契约是插件设计的一部分。本地树的 `FileSystem` 已提供这两个原语（守卫在那里是无操作）；已发布的 `@deepseek-ai/dsh-fs` 版本没有，因此需要守卫——[二进制 fs 提供者](#二进制-fs-提供者) 为没有它的宿主提供写侧能力；
+1. `src/fs-binary.ts`（宿主契约 + 写入器解析）——二进制 `readBytes`/`writeBytes` 契约是插件设计的一部分。`readBytes` 自 `0.1.0-rc.7` 起已发布在 harness 的 `dsh-fs` 发布线中；`writeBytes` 没有，因此[二进制 fs 提供者](#二进制-fs-提供者)以独立的 `fsBinary` 服务提供它，而不是修补宿主；
 2. `tests/` 针对已发布的 `ToolRuntime` 服务运行（自 `dsh-tools@0.1.0-rc.7` 起导出），因此消费者测试走真实的注册表流水线而非本地替身。
 
-同一份源码位于开发所用的本地 `deepseek-harness` 检出（`packages/docx/tool-docx`）中；从那里复制 `src` 与 `tests` 以保持本仓库同步（保留 `src/fs-binary.ts`，本地树不需要它）。
+该插件完全在本仓库中针对已发布的 `@deepseek-ai/*` 包进行开发与维护；harness 检出只是用于集成验证的运行目标，不携带本插件的副本。
 
 ## 许可证
 

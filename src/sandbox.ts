@@ -39,7 +39,11 @@ export class DocxSandboxController {
   constructor(private readonly ctx: Context) {
     const defaultMode = ctx.fs.sandboxMode
     this.escalationModes = defaultMode === undefined ? [] : ESCALATION_TARGETS
-    this.policy = defaultMode === undefined ? undefined : ctx.get('sandboxPolicy')
+    // The policy service may exist even when `ctx.fs` itself does not confine
+    // (the docx write fence lives in the separate `fsBinary` provider, which
+    // resolves the same `sandboxPolicy`), so resolution and denial mapping
+    // work as long as the service is composed.
+    this.policy = ctx.get('sandboxPolicy')
     if (defaultMode !== undefined && this.policy === undefined) {
       throw new Error('tool-docx: the mounted filesystem confines but ctx.sandboxPolicy is missing')
     }

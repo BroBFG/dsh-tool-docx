@@ -8,7 +8,8 @@ import type { Context } from '@deepseek-ai/cordis';
 import type { DocxToolCaps } from '../caps.ts';
 /**
  * Register the `docx_read` tool and its system-prompt guidance.
- * @param ctx - the plugin context; execution uses its `fs` service.
+ * @param ctx - the plugin context; execution uses its `fs` service (`readBytes`
+ * is part of the published filesystem contract since rc.7).
  * @param caps - the deployment's resolved caps.
  */
 export declare function applyReadTool(ctx: Context, caps: DocxToolCaps): void;

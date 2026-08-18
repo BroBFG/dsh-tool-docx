@@ -2,6 +2,6 @@
 # last confirmed-consistent state. All three languages carry equal authority; after
 # editing any side, bring the others along and re-record the hashes
 # (git hash-object <file>).
-README.md: ab7291f5d2cde23329b25d742704868a1d8b76fa
-README.zh.md: 507fd294ddd268bc384f733c260c0cf32dfadc9c
-README.ru.md: 6130da292f49f05d5f9db35ed7f4870ec7984b3d
+README.md: dcfd3f0a66b1965ed198bb57dff32e5a0b4b3ee4
+README.zh.md: fbb4039011e581f9ef1a58ca0854e5f9f9b4ca39
+README.ru.md: 24ba8e1dd45e8b084a0b46332a27570d59f6175f
